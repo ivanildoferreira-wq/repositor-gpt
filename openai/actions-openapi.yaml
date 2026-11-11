@@ -1,0 +1,62 @@
+openapi: 3.1.0
+info:
+  title: Repositor GPT - Google Sheets
+  description: API privada para consultar e editar planilhas Google por meio do Apps Script.
+  version: 1.0.0
+servers:
+  - url: https://script.google.com/macros/s/COLE_A_URL_DE_IMPLANTACAO/exec?key=COLE_SEU_TOKEN
+paths:
+  /:
+    post:
+      operationId: executarOperacaoGoogleSheets
+      summary: Executa uma operação em uma planilha Google.
+      description: Lista abas, lê intervalos, escreve células, acrescenta linhas ou cria abas e planilhas. Confirme com o usuário antes de sobrescrever dados.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action:
+                  type: string
+                  enum: [listSheets, readRange, writeRange, appendRows, createSheet, createSpreadsheet]
+                spreadsheetId:
+                  type: string
+                  description: ID da planilha Google, encontrado na URL.
+                sheetName:
+                  type: string
+                  description: Nome exato da aba.
+                range:
+                  type: string
+                  description: Intervalo em notação A1, por exemplo A1:C20.
+                values:
+                  type: array
+                  description: Matriz bidimensional de valores para writeRange ou appendRows.
+                  items:
+                    type: array
+                    items:
+                      oneOf:
+                        - type: string
+                        - type: number
+                        - type: boolean
+                        - type: "null"
+                spreadsheetName:
+                  type: string
+                  description: Nome da nova planilha para createSpreadsheet.
+      responses:
+        "200":
+          description: Resultado da operação.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  result:
+                    type: object
+                    additionalProperties: true
+                  error:
+                    type: string
