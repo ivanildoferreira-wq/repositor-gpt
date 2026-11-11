@@ -4,13 +4,20 @@ info:
   description: API privada para consultar e editar planilhas Google por meio do Apps Script.
   version: 1.0.0
 servers:
-  - url: https://script.google.com/macros/s/COLE_A_URL_DE_IMPLANTACAO/exec?key=COLE_SEU_TOKEN
+  - url: https://script.google.com/macros/s/COLE_O_ID_DA_IMPLANTACAO
 paths:
-  /:
+  /exec:
     post:
       operationId: executarOperacaoGoogleSheets
       summary: Executa uma operação em uma planilha Google.
       description: Lista abas, lê intervalos, escreve células, acrescenta linhas ou cria abas e planilhas. Confirme com o usuário antes de sobrescrever dados.
+      parameters:
+        - name: key
+          in: query
+          required: true
+          description: Token privado configurado nas propriedades do Apps Script. Não compartilhe o GPT nem este endereço.
+          schema:
+            type: string
       requestBody:
         required: true
         content:
