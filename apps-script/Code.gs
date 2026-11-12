@@ -38,7 +38,7 @@ function doPost(e) {
   } catch (err) {
     if (e && e.parameter && e.parameter.publicAction === "submitEvaluation") {
       return HtmlService.createHtmlOutput('<!doctype html><meta charset="utf-8"><script>parent.postMessage(' +
-        JSON.stringify({ type: "UNIVERSO_IF_RESULT", requestId: (e.parameter.payload || ""), error: safeMessage_(err) }) +
+        JSON.stringify({ type: "UNIVERSO_IF_RESULT", requestId: (function(){try{return JSON.parse(e.parameter.payload||"{}").requestId||"";}catch(x){return "";}})(), error: safeMessage_(err) }) +
         ',"*");</script><p>Não foi possível registrar a avaliação.</p>');
     }
     return json_({ ok: false, error: safeMessage_(err) });
