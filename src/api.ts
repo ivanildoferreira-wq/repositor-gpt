@@ -35,7 +35,7 @@ export function enviarAvaliacao(payload:EnvioAvaliacao):Promise<{accepted:boolea
     const timer=window.setTimeout(()=>finish(new Error("O servidor não confirmou o recebimento. Verifique o ranking antes de tentar novamente.")),20000);
     function onMessage(event:MessageEvent) {
       const data=event.data;
-      if(!data||data.type!=="UNIVERSO_IF_RESULT"||data.requestId!==payload.requestId)return;
+      if(event.source!==frame.contentWindow||!data||data.type!=="UNIVERSO_IF_RESULT"||data.requestId!==payload.requestId)return;
       if(data.error) finish(new Error(data.error));
       else if(data.result?.accepted) finish(undefined,data.result);
       else finish(new Error("O servidor não confirmou a avaliação."));
