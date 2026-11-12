@@ -24,7 +24,7 @@ O backend de avaliações foi adicionado em `apps-script/Code.gs`. Ele oferece l
 5. Confirme 46 linhas de projetos, sem cabeçalho duplicado. Não altere os IDs NAC-001…NAC-024 e EXT-001…EXT-022.
 
 ## 4. Criar códigos individuais
-1. No Apps Script, execute manualmente `gerarCodigosUniversoIF` com a quantidade necessária (1 a 5000).
+1. No editor Apps Script, escolha uma função pronta: `gerarCodigosUniversoIF_50`, `gerarCodigosUniversoIF_100` ou `gerarCodigosUniversoIF_200`. Para outra quantidade, crie um pequeno wrapper chamando `gerarCodigosUniversoIF(N)`, com N entre 1 e 5000.
 2. Copie os códigos retornados no registro da execução e distribua individualmente aos participantes por canal privado.
 3. Guarde a lista original em local seguro. A planilha armazena apenas hashes SHA-256 com pepper; não é possível recuperar o código original a partir dela.
 4. Não execute a geração novamente para a mesma distribuição, a menos que queira emitir um lote adicional.
