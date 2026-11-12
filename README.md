@@ -1,13 +1,27 @@
-# repositor-gpt
+# Universo IF Avalia
 
-Repositório inicial.
+Protótipo acadêmico para explorar projetos e registrar avaliações educativas. Não representa julgamento científico, votação oficial ou premiação do evento.
 
-## Integração com Google Sheets
+## Stack
+- React + Vite + TypeScript
+- Google Apps Script + Google Sheets (backend planejado)
+- GitHub Actions + GitHub Pages
 
-A pasta apps-script/ contém uma API Google Apps Script para listar abas, ler intervalos, atualizar células, acrescentar linhas e criar planilhas/abas.
+## Desenvolvimento
+```bash
+npm ci
+npm run dev
+npm test
+npm run build
+```
 
-- Configuração: docs/SETUP.md
-- Especificação para GPT Action: openai/actions-openapi.yaml
-- Instruções do GPT: openai/instructions.md
+## Estado atual
+A interface inicial foi criada na branch `feat/universo-if-avalia-mvp`. O catálogo oficial ainda não foi importado: o arquivo JSON obrigatório não veio no anexo recebido. A tela mostra essa pendência sem inventar títulos. O backend de avaliações e ranking ainda precisa ser implementado e conectado.
 
-**Importante:** configure o token e a URL de implantação fora do repositório. Nunca faça commit de credenciais.
+Consulte:
+- `docs/BACKLOG.md`
+- `docs/AUDITORIA_CATALOGO.md`
+- `docs/CONFIGURAR_GOOGLE.md`
+
+## Segurança e privacidade
+Visitantes não precisam criar conta. A regra acadêmica prevê código individual ao portador para avaliar projetos: um código pode avaliar vários projetos, uma vez cada. Códigos e votos não podem ser publicados. Não existe garantia de identidade pessoal por código.
