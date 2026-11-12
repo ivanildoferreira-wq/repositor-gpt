@@ -90,7 +90,8 @@ function gerarCodigosUniversoIF(quantidade) {
     rows.push([hashCode_(code,pepper),true,new Date(),""]);
   }
   sh.getRange(sh.getLastRow()+1,1,rows.length,4).setValues(rows);
-  return plain; // Só aparece no log da execução. Copie e guarde com segurança.
+  Logger.log("CÓDIGOS GERADOS — copie e guarde com segurança: " + JSON.stringify(plain));
+  return plain; // O retorno e o log desta execução contêm os códigos em texto puro.
 }
 function publicProjects_() {
   const sh = getSpreadsheet_().getSheetByName("Projetos");
