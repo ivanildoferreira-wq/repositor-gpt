@@ -1,4 +1,4 @@
-const endpoint = import.meta.env.VITE_UNIVERSO_IF_API_URL as string | undefined;
+const endpoint = (import.meta as ImportMeta & { env?: { VITE_UNIVERSO_IF_API_URL?: string } }).env?.VITE_UNIVERSO_IF_API_URL;
 type ApiEnvelope<T> = { ok: boolean; result?: T; error?: string };
 declare global { interface Window { [key: string]: unknown } }
 
