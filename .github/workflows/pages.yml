@@ -20,6 +20,7 @@ jobs:
           node-version: 20
       - run: npm install --no-package-lock
       - run: npm run build
+      - run: npm test
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
