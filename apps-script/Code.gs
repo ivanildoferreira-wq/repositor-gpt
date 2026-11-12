@@ -78,8 +78,7 @@ function setupUniversoIF() {
 }
 /** Retorna códigos em execução manual. Entregue-os aos participantes de forma privada e não execute novamente. */
 function gerarCodigosUniversoIF(quantidade) {
-  const entrada = quantidade || Browser.inputBox("Gerar códigos", "Quantos códigos deseja criar? (1 a 5000)", Browser.Buttons.OK_CANCEL);
-  const n = Number(entrada);
+  const n = Number(quantidade);
   if (!Number.isInteger(n) || n < 1 || n > 5000) throw new Error("Quantidade deve ser de 1 a 5000.");
   const sh = getSpreadsheet_().getSheetByName("Codigos");
   if (!sh || sh.getLastRow() < 1) throw new Error("Execute setupUniversoIF primeiro.");
@@ -94,6 +93,11 @@ function gerarCodigosUniversoIF(quantidade) {
   Logger.log("CÓDIGOS GERADOS — copie e guarde com segurança: " + JSON.stringify(plain));
   return plain; // O retorno e o log desta execução contêm os códigos em texto puro.
 }
+/** Atalhos para executar pelo menu do editor sem parâmetros. */
+function gerarCodigosUniversoIF_50() { return gerarCodigosUniversoIF(50); }
+function gerarCodigosUniversoIF_100() { return gerarCodigosUniversoIF(100); }
+function gerarCodigosUniversoIF_200() { return gerarCodigosUniversoIF(200); }
+
 function publicProjects_() {
   const sh = getSpreadsheet_().getSheetByName("Projetos");
   if (!sh || sh.getLastRow() < 2) return [];
