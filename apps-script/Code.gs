@@ -137,7 +137,13 @@ function submitEvaluation_(p) {
   lock.waitLock(20000);
   try {
     const existingReq=findValue_(votes,1,p.requestId);
-    if (existingReq) return { accepted:true, duplicateRequest:true, message:"Esta solicitação já foi processada." };
+    if (existingReq) {
+      const prior=votes.getRange(existingReq,2,1,7).getValues()[0];
+      if (String(prior[0])!==digest || String(prior[1])!==projectId ||
+          scores.some((v,i)=>Number(prior[i+2])!==v))
+        throw new Error("Identificador de solicitação já utilizado.");
+      return { accepted:true, duplicateRequest:true, score:Number(prior[6]), message:"Esta solicitação já foi registrada." };
+    }
     const codeRow=findValue_(codes,1,digest);
     if (!codeRow) throw new Error("Código não reconhecido.");
     if (String(codes.getRange(codeRow,2).getValue()).toUpperCase()==="FALSE") throw new Error("Código desativado.");
