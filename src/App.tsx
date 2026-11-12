@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { carregarProjetos, carregarRanking, enviarAvaliacao } from './api';
-import { Search, Grid3X3, Trophy, ClipboardCheck, ArrowLeft, Star, AlertCircle } from 'lucide-react';
+import { carregarProjetos, carregarRanking, enviarAvaliacao as enviarAvaliacaoApi } from './api';
+import { Search, Grid3X3, Trophy, ArrowLeft, Star, AlertCircle } from 'lucide-react';
 import rawCatalog from './catalogo.json';
 import { calcularNota, CRITERIOS, normalizarBusca, validarCatalogo, type Projeto, type Modalidade } from './domain';
 
@@ -47,7 +47,7 @@ export default function App() {
     }
     setAviso('Enviando avaliação…');
     try {
-      const result = await enviarAvaliacao({requestId: crypto.randomUUID().replace(/-/g,''), projectId: selecionado.id, code: codigo.trim(), scores: notas});
+      const result = await enviarAvaliacaoApi({requestId: crypto.randomUUID().replace(/-/g,''), projectId: selecionado.id, code: codigo.trim(), scores: notas});
       setAviso(result.message + ' Nota registrada: ' + result.score.toFixed(2) + '.');
     } catch (error) { setAviso(error instanceof Error ? error.message : 'Não foi possível enviar a avaliação.'); }
   }
