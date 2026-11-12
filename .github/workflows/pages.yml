@@ -20,6 +20,8 @@ jobs:
           node-version: 20
       - run: npm install --no-package-lock
       - run: npm run build
+        env:
+          VITE_UNIVERSO_IF_API_URL: ${{ vars.VITE_UNIVERSO_IF_API_URL }}
       - run: npm test
       - uses: actions/upload-pages-artifact@v3
         with:
