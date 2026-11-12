@@ -78,7 +78,8 @@ function setupUniversoIF() {
 }
 /** Retorna códigos em execução manual. Entregue-os aos participantes de forma privada e não execute novamente. */
 function gerarCodigosUniversoIF(quantidade) {
-  const n = Number(quantidade);
+  const entrada = quantidade || Browser.inputBox("Gerar códigos", "Quantos códigos deseja criar? (1 a 5000)", Browser.Buttons.OK_CANCEL);
+  const n = Number(entrada);
   if (!Number.isInteger(n) || n < 1 || n > 5000) throw new Error("Quantidade deve ser de 1 a 5000.");
   const sh = getSpreadsheet_().getSheetByName("Codigos");
   if (!sh || sh.getLastRow() < 1) throw new Error("Execute setupUniversoIF primeiro.");
