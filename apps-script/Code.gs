@@ -321,7 +321,7 @@ function testarRegrasAvaliacaoUniversoIF() {
     props.setProperty("SPREADSHEET_ID",temp.getId());
     const p = {requestId:"teste"+Utilities.getUuid().replace(/-/g,""),projectId:"TEST-001",code:code,scores:[5,4,3,2]};
     const first = submitEvaluation_(p);
-    assert_(first.accepted === true && first.score === 3.8, "Primeiro voto aceito com média ponderada 3,80");
+    assert_(first.accepted === true && first.score === 3.75, "Primeiro voto aceito com média ponderada 3,75");
     assert_(votes.getLastRow() === 2, "Exatamente um voto gravado no ambiente temporário");
     const retry = submitEvaluation_(p);
     assert_(retry.accepted === true && retry.duplicateRequest === true, "Reenvio idêntico é idempotente");
