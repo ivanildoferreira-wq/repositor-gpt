@@ -9,6 +9,7 @@ function doGet(e) {
     let result;
     if (action === "projects") result = publicProjects_();
     else if (action === "ranking") result = publicRanking_();
+    else if (action === "receipt") result = publicReceipt_(e);
     else if (action === "health") result = { ok: true, service: "universo-if-avalia", version: "1.0.0" };
     else throw new Error("Ação pública não reconhecida.");
     return output_(e, { ok: true, result: result });
@@ -108,6 +109,23 @@ function publicProjects_() {
     fontes: String(r[9] || "").split("|").filter(Boolean)
   }));
 }
+/**
+ * Consulta pública de confirmação por identificador aleatório de solicitação.
+ * Não retorna códigos, hashes, participantes nem outros dados pessoais.
+ * Funciona mesmo quando a votação está fechada.
+ */
+function publicReceipt_(e) {
+  const requestId = String((e && e.parameter && e.parameter.requestId) || "");
+  if (!/^[A-Za-z0-9_-]{12,80}$/.test(requestId))
+    throw new Error("Identificador da solicitação inválido.");
+  const votes = getSpreadsheet_().getSheetByName("Avaliacoes");
+  if (!votes) throw new Error("Aba de avaliações indisponível.");
+  const row = findValue_(votes, 1, requestId);
+  if (!row) return { received: false };
+  const score = Number(votes.getRange(row, 8).getValue());
+  return { received: true, score: score };
+}
+
 function publicRanking_() {
   const ss = getSpreadsheet_(), sh = ss.getSheetByName("Avaliacoes");
   if (!sh || sh.getLastRow() < 2) return [];
