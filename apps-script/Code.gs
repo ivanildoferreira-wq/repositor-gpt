@@ -23,7 +23,7 @@ function doPost(e) {
       const payload = JSON.parse(e.parameter.payload || "{}");
       const result = submitEvaluation_(payload);
       return HtmlService.createHtmlOutput(
-        '<!doctype html><meta charset="utf-8"><script>parent.postMessage(' +
+        '<!doctype html><meta charset="utf-8"><script>top.postMessage(' +
         JSON.stringify({ type: "UNIVERSO_IF_RESULT", requestId: payload.requestId, result: result }) +
         ',"*");</script><p>Envio processado. Você pode fechar esta janela.</p>'
       );
@@ -37,7 +37,7 @@ function doPost(e) {
     return json_({ ok: true, result: dispatch_(request || {}) });
   } catch (err) {
     if (e && e.parameter && e.parameter.publicAction === "submitEvaluation") {
-      return HtmlService.createHtmlOutput('<!doctype html><meta charset="utf-8"><script>parent.postMessage(' +
+      return HtmlService.createHtmlOutput('<!doctype html><meta charset="utf-8"><script>top.postMessage(' +
         JSON.stringify({ type: "UNIVERSO_IF_RESULT", requestId: (function(){try{return JSON.parse(e.parameter.payload||"{}").requestId||"";}catch(x){return "";}})(), error: safeMessage_(err) }) +
         ',"*");</script><p>Não foi possível registrar a avaliação.</p>');
     }
