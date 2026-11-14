@@ -19,6 +19,8 @@ export default function App() {
   const [notas, setNotas] = useState<number[]>([0, 0, 0, 0]);
   const [codigo, setCodigo] = useState('');
   const [aviso, setAviso] = useState('');
+  const [enviando, setEnviando] = useState(false);
+  const [enviado, setEnviado] = useState(false);
 
   useEffect(() => {
     carregarProjetos<Projeto>().then(data => { if (data.length) setCatalogo(validarCatalogo(data)); }).catch(() => {});
@@ -38,18 +40,22 @@ export default function App() {
   const notaPrevista = notas.every(n => n >= 1) ? calcularNota(notas).toFixed(2) : '—';
 
   function abrirAvaliacao(projeto: Projeto) {
-    setSelecionado(projeto); setNotas([0, 0, 0, 0]); setCodigo(''); setAviso(''); setAba('avaliar');
+    setSelecionado(projeto); setNotas([0, 0, 0, 0]); setCodigo(''); setAviso(''); setEnviando(false); setEnviado(false); setAba('avaliar');
   }
 
   async function enviarAvaliacao() {
+    if (enviando || enviado) return;
     if (!selecionado || !codigo.trim() || notas.some(n => n < 1 || n > 5)) {
       setAviso('Preencha o código e os quatro critérios antes de continuar.'); return;
     }
+    setEnviando(true);
     setAviso('Enviando avaliação…');
     try {
       const result = await enviarAvaliacaoApi({requestId: crypto.randomUUID().replace(/-/g,''), projectId: selecionado.id, code: codigo.trim(), scores: notas});
       setAviso(result.message + ' Nota registrada: ' + result.score.toFixed(2) + '.');
+      setEnviado(true);
     } catch (error) { setAviso(error instanceof Error ? error.message : 'Não foi possível enviar a avaliação.'); }
+    finally { setEnviando(false); }
   }
 
   return <div className="app-shell">
@@ -65,7 +71,7 @@ export default function App() {
         <><div className="section-heading"><div><p className="eyebrow">CATÁLOGO</p><h2>Projetos em destaque</h2></div><span className="count">{filtrados.length} encontrados</span></div><div className="filters"><label className="search"><Search size={18}/><input value={busca} onChange={e=>setBusca(e.target.value)} placeholder="Buscar projeto pelo título..." /></label><select value={modalidade} onChange={e=>setModalidade(e.target.value as typeof modalidade)}><option>Todas</option><option>Mostra Nacional</option><option>Mostra de Extensão</option></select></div>
         {filtrados.length ? <div className="project-grid">{filtrados.map(p=><button className="project-card" key={p.id} onClick={()=>setSelecionado(p)}><span className="card-kicker">{p.id} · {p.modalidade}</span><strong>{p.titulo}</strong><span className="card-area">{p.area_tematica}</span><span className="card-foot">{p.data} <span>Conhecer projeto ↗</span></span></button>)}</div> : <div className="empty"><AlertCircle size={28}/><h3>{catalogo.length===0?'Catálogo oficial pendente':'Nenhum projeto encontrado'}</h3><p>{catalogo.length===0?'O catálogo oficial ainda não foi carregado pelo backend.':'Tente outro termo ou modalidade.'}</p></div>}</>}
       </section>}
-      {aba==='avaliar' && <section className="content"><button className="back" onClick={()=>setAba('projetos')}><ArrowLeft size={16}/> Voltar</button><div className="section-heading"><div><p className="eyebrow">SUA PARTICIPAÇÃO</p><h2>Avaliar projeto</h2><p className="muted">{selecionado?.titulo}</p></div></div><div className="evaluation-card"><label className="field-label">Código individual de avaliação<input value={codigo} onChange={e=>setCodigo(e.target.value)} placeholder="Digite o código fornecido pela organização" /></label>{CRITERIOS.map((c,i)=><div className="criterion" key={c}><div><b>{c}</b><small>Peso: {[30,30,25,15][i]}%</small></div><div className="rating">{[1,2,3,4,5].map(n=><button aria-label={`${n} - ${rotulos[n-1]}`} aria-pressed={notas[i]===n} className={notas[i]>=n?'chosen':''} key={n} onClick={()=>setNotas(old=>old.map((v,j)=>i===j?n:v))}><Star size={17} fill={notas[i]>=n?'currentColor':'none'}/></button>)}</div><small className="muted">{notas[i] ? rotulos[notas[i]-1] : 'Selecione uma nota de 1 a 5'}</small></div>)}<div className="score-preview"><span>Prévia da nota ponderada</span><strong>{notaPrevista}</strong></div><button className="primary full" onClick={enviarAvaliacao}>Enviar avaliação</button>{aviso && <p className="notice">{aviso}</p>}<p className="fine-print">A avaliação é educativa e indicativa, não representa nota científica oficial ou premiação do evento.</p></div></section>}
+      {aba==='avaliar' && <section className="content"><button className="back" onClick={()=>setAba('projetos')}><ArrowLeft size={16}/> Voltar</button><div className="section-heading"><div><p className="eyebrow">SUA PARTICIPAÇÃO</p><h2>Avaliar projeto</h2><p className="muted">{selecionado?.titulo}</p></div></div><div className="evaluation-card"><label className="field-label">Código individual de avaliação<input value={codigo} onChange={e=>setCodigo(e.target.value)} placeholder="Digite o código fornecido pela organização" /></label>{CRITERIOS.map((c,i)=><div className="criterion" key={c}><div><b>{c}</b><small>Peso: {[30,30,25,15][i]}%</small></div><div className="rating">{[1,2,3,4,5].map(n=><button aria-label={`${n} - ${rotulos[n-1]}`} aria-pressed={notas[i]===n} className={notas[i]>=n?'chosen':''} key={n} onClick={()=>setNotas(old=>old.map((v,j)=>i===j?n:v))}><Star size={17} fill={notas[i]>=n?'currentColor':'none'}/></button>)}</div><small className="muted">{notas[i] ? rotulos[notas[i]-1] : 'Selecione uma nota de 1 a 5'}</small></div>)}<div className="score-preview"><span>Prévia da nota ponderada</span><strong>{notaPrevista}</strong></div><button className="primary full" onClick={enviarAvaliacao} disabled={enviando || enviado}>{enviando ? "Aguardando confirmação…" : enviado ? "Avaliação registrada" : "Enviar avaliação"}</button>{aviso && <p className="notice">{aviso}</p>}<p className="fine-print">A avaliação é educativa e indicativa, não representa nota científica oficial ou premiação do evento.</p></div></section>}
       {aba==='ranking' && <section className="content"><div className="section-heading"><div><p className="eyebrow">RESULTADOS DA PARTICIPAÇÃO</p><h2>Ranking por modalidade</h2><p className="muted">Médias de avaliações válidas; mínimo de cinco por projeto.</p></div></div>{carregando ? <div className="empty">Carregando ranking…</div> : ranking.length ? (['Mostra Nacional','Mostra de Extensão'] as Modalidade[]).map(tipo => { const itens=ranking.filter(item=>item.modalidade===tipo); return <section key={tipo}><div className="section-heading"><h3>{tipo}</h3><span className="count">{itens.length} classificados</span></div>{itens.length ? <div className="project-grid">{itens.map((item,i)=><article className="project-card" key={item.id}><span className="card-kicker">#{i+1} · {item.avaliacoes} avaliações</span><strong>{item.titulo}</strong><span className="card-area">Média {item.media.toFixed(2)}</span></article>)}</div> : <p className="muted">Nenhum projeto desta modalidade atingiu cinco avaliações válidas.</p>}</section>; }) : <div className="empty"><Trophy size={30}/><h3>Ranking ainda não disponível</h3><p>Os projetos aparecem após atingir o mínimo de cinco avaliações válidas por projeto.</p></div>}</section>}
     </main>
     <footer><span>UNIVERSO IF AVALIA</span><span>Protótipo acadêmico · Não é avaliação oficial do evento</span></footer>
