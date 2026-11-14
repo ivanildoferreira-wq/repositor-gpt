@@ -1,4 +1,6 @@
-const endpoint = (import.meta as ImportMeta & { env?: { VITE_UNIVERSO_IF_API_URL?: string } }).env?.VITE_UNIVERSO_IF_API_URL;
+// Endpoint público do Apps Script; pode ser substituído no build por VITE_UNIVERSO_IF_API_URL.
+// Não coloque CODE_PEPPER, API_TOKEN ou códigos individuais neste arquivo.
+const endpoint = (import.meta as ImportMeta & { env?: { VITE_UNIVERSO_IF_API_URL?: string } }).env?.VITE_UNIVERSO_IF_API_URL || 'https://script.google.com/a/macros/acad.ifma.edu.br/s/AKfycbzMZr-e8DNX2QZ9v6NCUZSXb-AOvkY6LhnBA5l-V3bdnn8OLclWjGlFxEq0VEdxHH0_/exec';
 type ApiEnvelope<T> = { ok: boolean; result?: T; error?: string };
 declare global { interface Window { [key: string]: unknown } }
 
