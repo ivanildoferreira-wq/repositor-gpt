@@ -283,66 +283,30 @@ function json_(data) {
 }
 
 
-/**
- * Teste seguro das regras de avaliação, sem gravar na aba Avaliacoes.
- * Execute manualmente no editor. Usa uma planilha temporária e remove-a ao final.
- * NÃO usa códigos reais e NÃO altera a votação oficial.
- */
-function testarRegrasAvaliacaoUniversoIF() {
-  const temp = SpreadsheetApp.create("TESTE TEMPORARIO Universo IF Avalia");
-  const props = PropertiesService.getScriptProperties();
-  const originalId = props.getProperty("SPREADSHEET_ID");
-  const originalPepper = props.getProperty("CODE_PEPPER");
-  if (!originalId || !originalPepper) {
-    DriveApp.getFileById(temp.getId()).setTrashed(true);
-    throw new Error("Configure SPREADSHEET_ID e CODE_PEPPER antes do teste.");
-  }
-  const result = [];
-  function assert_(condition, message) {
-    if (!condition) throw new Error("FALHOU: " + message);
-    result.push("OK: " + message);
-  }
-  try {
-    const projectSheet = temp.getSheets()[0];
-    projectSheet.setName("Projetos");
-    projectSheet.appendRow(U_HEADERS.Projetos);
-    projectSheet.appendRow(["TEST-001","Projeto de teste","Mostra Nacional","Teste","2026-11-14","09:00","10:00","Presencial","Sala teste",""]);
-    const codes = temp.insertSheet("Codigos");
-    codes.appendRow(U_HEADERS.Codigos);
-    const code = Utilities.getUuid().replace(/-/g,"").slice(0,12).toUpperCase();
-    codes.appendRow([hashCode_(code, originalPepper),true,new Date(),"Código exclusivo do teste"]);
-    const votes = temp.insertSheet("Avaliacoes");
-    votes.appendRow(U_HEADERS.Avaliacoes);
-    const config = temp.insertSheet("Configuracao");
-    config.appendRow(U_HEADERS.Configuracao);
-    config.appendRow(["votacao_aberta","TRUE"]);
-    config.appendRow(["minimo_ranking","5"]);
 
-    props.setProperty("SPREADSHEET_ID",temp.getId());
-    const p = {requestId:"teste"+Utilities.getUuid().replace(/-/g,""),projectId:"TEST-001",code:code,scores:[5,4,3,2]};
-    const first = submitEvaluation_(p);
-    assert_(first.accepted === true && first.score === 3.75, "Primeiro voto aceito com média ponderada 3,75");
-    assert_(votes.getLastRow() === 2, "Exatamente um voto gravado no ambiente temporário");
-    const retry = submitEvaluation_(p);
-    assert_(retry.accepted === true && retry.duplicateRequest === true, "Reenvio idêntico é idempotente");
-    assert_(votes.getLastRow() === 2, "Reenvio não duplicou o voto");
-    try {
-      submitEvaluation_({requestId:"teste"+Utilities.getUuid().replace(/-/g,""),projectId:p.projectId,code:p.code,scores:[1,1,1,1]});
-      throw new Error("FALHOU: voto duplicado foi aceito");
-    } catch (err) {
-      assert_(String(err.message).includes("já avaliou"), "Segundo voto no mesmo projeto é bloqueado");
-    }
-    try {
-      submitEvaluation_({requestId:"teste"+Utilities.getUuid().replace(/-/g,""),projectId:p.projectId,code:"FFFFFFFFFFFF",scores:[1,1,1,1]});
-      throw new Error("FALHOU: código desconhecido foi aceito");
-    } catch (err) {
-      assert_(String(err.message).includes("não reconhecido"), "Código desconhecido é recusado");
-    }
-    assert_(votes.getLastRow() === 2, "Nenhum voto extra foi gravado");
-    Logger.log("TESTE CONCLUÍDO:\\n" + result.join("\\n"));
-    return {ok:true,checks:result};
-  } finally {
-    props.setProperty("SPREADSHEET_ID",originalId);
-    DriveApp.getFileById(temp.getId()).setTrashed(true);
-  }
+/**
+ * Diagnóstico somente leitura da configuração de votação.
+ * Não grava votos, não modifica propriedades e não expõe códigos.
+ */
+function diagnosticarUniversoIF() {
+  const ss = getSpreadsheet_();
+  const projects = ss.getSheetByName("Projetos");
+  const codes = ss.getSheetByName("Codigos");
+  const votes = ss.getSheetByName("Avaliacoes");
+  const config = ss.getSheetByName("Configuracao");
+  if (!projects || !codes || !votes || !config) throw new Error("Uma ou mais abas obrigatórias não existem.");
+  const codeRows = codes.getLastRow() > 1 ? codes.getRange(2,1,codes.getLastRow()-1,2).getValues() : [];
+  const hashes = codeRows.map(r=>String(r[0]||"")).filter(Boolean);
+  const result = {
+    ok: true,
+    projetos: Math.max(0,projects.getLastRow()-1),
+    codigos: hashes.length,
+    codigosUnicos: new Set(hashes).size,
+    codigosAtivos: codeRows.filter(r=>String(r[1]).toUpperCase()==="TRUE").length,
+    avaliacoes: Math.max(0,votes.getLastRow()-1),
+    votacaoAberta: configValue_("votacao_aberta","TRUE")==="TRUE",
+    minimoRanking: Number(configValue_("minimo_ranking","5"))
+  };
+  Logger.log(JSON.stringify(result));
+  return result;
 }
