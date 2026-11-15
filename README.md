@@ -23,12 +23,22 @@ O catálogo local contém os 46 projetos extraídos do kit oficial. O frontend u
 3. Rode `npm install`, `npm test` e `npm run build`.
 4. Só depois da validação, configure o deploy do GitHub Pages.
 
-## Estado da implantação
-- Implementação no branch `feat/universo-if-avalia-mvp`.
-- `main` não alterada e site não publicado.
-- Código do Apps Script preparado, mas ainda precisa ser copiado/implantado na conta Google do responsável.
-- Planilha ainda precisa ser criada e configurada; nenhum código individual foi gerado.
-- Build/testes não foram executados neste ambiente.
+## Estado da implantação (verificado em 14/11/2026)
+- Aplicação publicada no GitHub Pages: https://ivanildoferreira-wq.github.io/repositor-gpt/
+- Código-fonte principal no branch `main`, com deploy via GitHub Actions.
+- Google Apps Script implantado e integrado à planilha Google Sheets.
+- Catálogo de 46 projetos e ranking demonstrativo verificados na interface.
+- Envio de avaliações validado ponta a ponta: confirmação de sucesso no site e registro correspondente na aba `Avaliacoes`.
+- Quatro avaliações de teste registradas até a verificação; não são dados de demonstração do ranking.
+- Votação encerrada após o teste (`Configuracao!B2 = FALSE`).
+- Ranking real exibe somente projetos com pelo menos cinco avaliações válidas (`minimo_ranking = 5`); portanto pode ficar vazio até atingir esse limite.
+
+### Operação e novos testes
+1. Mantenha `votacao_aberta` em `FALSE` fora do período autorizado de avaliação.
+2. Para um teste controlado, abra a votação temporariamente e use um código válido em um projeto ainda não avaliado por esse código.
+3. Envie apenas uma vez e aguarde a confirmação; em caso de erro, confira a aba `Avaliacoes` antes de repetir.
+4. Encerre a votação imediatamente após o teste.
+5. Não publique códigos individuais, hashes, `CODE_PEPPER`, `API_TOKEN` ou o conteúdo privado das abas.
 
 ## Segurança e privacidade
 - Visitantes não precisam criar conta.
