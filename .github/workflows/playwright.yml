@@ -8,10 +8,10 @@ permissions:
   contents: read
 jobs:
   smoke:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: '22'
       - run: npm install --no-save @playwright/test@1.56.1
@@ -54,7 +54,7 @@ jobs:
       - run: npx playwright test smoke.spec.cjs --reporter=html --trace=retain-on-failure
         env:
           CI: 'true'
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         if: always()
         with:
           name: playwright-report
