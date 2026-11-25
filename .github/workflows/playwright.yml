@@ -40,7 +40,7 @@ jobs:
               await expect(page.getByText('Preencha o código e os quatro critérios antes de continuar.')).toBeVisible();
               for(const criterion of await page.locator('.criterion').all()) await criterion.getByRole('button',{name:'5 - Excelente'}).click();
               await expect(page.locator('.score-preview strong')).toHaveText('5.00');
-              await page.locator('.tabs').getByRole('button',{name:'Ranking'}).click();
+              await page.locator('nav:visible').getByRole('button',{name:'Ranking',exact:true}).first().click();
               await expect(page.getByText('Ranking por modalidade')).toBeVisible();
               await page.getByRole('button',{name:'Ver demonstração'}).click();
               await expect(page.getByRole('status')).toContainText('DADOS FICTÍCIOS');
