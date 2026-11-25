@@ -1,0 +1,63 @@
+name: Playwright - site publicado
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/playwright.yml'
+permissions:
+  contents: read
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-save @playwright/test@1.56.1
+      - run: npx playwright install --with-deps chromium
+      - name: Create browser tests
+        run: |
+          cat > smoke.spec.cjs <<'EOF'
+          const {test, expect} = require('@playwright/test');
+          for (const viewport of [{width:1280,height:800},{width:390,height:844}]) {
+            test('catalogo, formulario e ranking '+viewport.width, async ({page}) => {
+              await page.setViewportSize(viewport);
+              const errors=[];
+              page.on('pageerror', e=>errors.push(e.message));
+              await page.route('**/*', route => route.request().method()==='POST' ? route.abort() : route.continue());
+              const response=await page.goto('https://ivanildoferreira-wq.github.io/repositor-gpt/',{waitUntil:'domcontentloaded'});
+              expect(response.status()).toBe(200);
+              await expect(page.locator('.project-card')).toHaveCount(46,{timeout:20000});
+              const search=page.getByPlaceholder('Buscar projeto pelo título...');
+              await search.fill('zzzz_sem_resultado_123');
+              await expect(page.getByText('Nenhum projeto encontrado')).toBeVisible();
+              await search.clear();
+              await page.locator('.project-card').first().click();
+              await page.getByRole('button',{name:'Avaliar este projeto'}).click();
+              await expect(page.locator('.criterion')).toHaveCount(4);
+              await page.getByRole('button',{name:'Enviar avaliação'}).click();
+              await expect(page.getByText('Preencha o código e os quatro critérios antes de continuar.')).toBeVisible();
+              for(const criterion of await page.locator('.criterion').all()) await criterion.getByRole('button',{name:'5 - Excelente'}).click();
+              await expect(page.locator('.score-preview strong')).toHaveText('5.00');
+              await page.locator('.tabs').getByRole('button',{name:'Ranking'}).click();
+              await expect(page.getByText('Ranking por modalidade')).toBeVisible();
+              await page.getByRole('button',{name:'Ver demonstração'}).click();
+              await expect(page.getByRole('status')).toContainText('DADOS FICTÍCIOS');
+              await expect(page.locator('.project-card').first()).toBeVisible();
+              await page.getByRole('button',{name:'Ranking real'}).click();
+              await expect(page.getByRole('status')).toHaveCount(0);
+              expect(errors).toEqual([]);
+            });
+          }
+          EOF
+      - run: npx playwright test smoke.spec.cjs --reporter=html --trace=retain-on-failure
+        env:
+          CI: 'true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
