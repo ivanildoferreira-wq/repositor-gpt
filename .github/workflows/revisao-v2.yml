@@ -1,0 +1,81 @@
+name: Revisao v2 - testes isolados
+on:
+  push:
+    branches: [revisao-v2]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validation:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - run: npm install
+      - run: npm test
+      - run: npm run build
+      - run: node --check < apps-script/Code.gs
+      - run: npm install --no-save @playwright/test@1.56.1
+      - run: npx playwright install --with-deps chromium
+      - run: |
+          npm run preview -- --host 127.0.0.1 > /tmp/vite.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/repositor-gpt/ >/dev/null && break; sleep 1; done
+          cat > smoke.spec.cjs <<'EOF'
+          const {test,expect}=require('@playwright/test');
+          for(const width of [320,390,1280]) {
+            test('interface isolada '+width,async({page})=>{
+              await page.setViewportSize({width,height:844});
+              const errors=[];
+              page.on('pageerror',e=>errors.push(e.message));
+              await page.route('**/*',async route=>{
+                const url=new URL(route.request().url());
+                if(url.origin==='http://127.0.0.1:4173') return route.continue();
+                if(route.request().method()==='GET' && url.searchParams.has('callback')){
+                  const cb=url.searchParams.get('callback');
+                  return route.fulfill({contentType:'application/javascript',body:cb+'({ok:true,result:[]});'});
+                }
+                return route.abort();
+              });
+              await page.goto('http://127.0.0.1:4173/repositor-gpt/');
+              await expect(page.locator('.project-card')).toHaveCount(46);
+              await page.getByRole('combobox',{name:'Filtrar por modalidade'}).selectOption('Mostra de Extensão');
+              await expect(page.locator('.project-card').first()).toContainText('Mostra de Extensão');
+              await page.getByRole('combobox').selectOption('Todas');
+              await page.locator('.project-card').first().click();
+              await page.getByRole('button',{name:'Avaliar este projeto'}).click();
+              await expect(page.getByText('0 de 4 critérios preenchidos')).toBeVisible();
+              await page.getByRole('button',{name:'Enviar avaliação'}).click();
+              await expect(page.getByText('Preencha o código e os quatro critérios antes de continuar.')).toBeVisible();
+              const ratings=await page.locator('.criterion').all();
+              for(let i=0;i<4;i++) await ratings[i].getByRole('button',{name:new RegExp('^'+[4,5,4,3][i]+' -')}).click();
+              await expect(page.locator('.score-preview strong')).toHaveText('4.15');
+              await expect(page.getByText('4 de 4 critérios preenchidos')).toBeVisible();
+              expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+              await page.locator('nav:visible').getByRole('button',{name:'Ranking',exact:true}).click();
+              await page.getByRole('button',{name:'Ver demonstração'}).click();
+              await expect(page.locator('.ranking-column')).toHaveCount(3);
+              await expect(page.locator('.ranking-column').first()).toContainText('Geral');
+              await expect(page.locator('.ranking-column').first().locator('.rank-position').first()).toContainText('1º');
+              await expect(page.getByRole('status')).toContainText('DADOS FICTÍCIOS');
+              expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
+              await page.getByRole('button',{name:'Ranking real'}).click();
+              await expect(page.locator('.ranking-column')).toHaveCount(3);
+              expect(errors).toEqual([]);
+            });
+          }
+          EOF
+          npx playwright test smoke.spec.cjs --reporter=html --trace=retain-on-failure
+        env:
+          CI: 'true'
+      - uses: actions/upload-artifact@v5
+        if: always()
+        with:
+          name: revisao-v2-report
+          path: |
+            playwright-report/
+            test-results/
