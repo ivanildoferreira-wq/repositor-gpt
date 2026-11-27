@@ -11,7 +11,7 @@ function doGet(e) {
     if (action === "projects") result = publicProjects_();
     else if (action === "ranking") result = publicRanking_();
     else if (action === "receipt") result = publicReceipt_(e);
-    else if (action === "health") result = { ok: true, service: "universo-if-avalia", version: "1.0.0" };
+    else if (action === "health") result = { ok: true, service: "universo-if-avalia", version: "2.1.0" };
     else throw new Error("Ação pública não reconhecida.");
     return output_(e, { ok: true, result: result });
   } catch (err) {
@@ -20,6 +20,7 @@ function doGet(e) {
 }
 function doPost(e) {
   try {
+    if (e && e.parameter && e.parameter.publicAction === "participant") return participantResponse_(e);
     if (e && e.parameter && e.parameter.publicAction === "redeemInvitation") return redeemInvitationPage_(e);
     // Envio público por formulário HTML direcionado a iframe: evita preflight CORS.
     if (e && e.parameter && e.parameter.publicAction === "submitEvaluation") {
@@ -174,14 +175,12 @@ function submitEvaluation_(p) {
     const codeRow=findValue_(codes,1,digest);
     if (!codeRow) throw new Error("Código não reconhecido.");
     if (String(codes.getRange(codeRow,2).getValue()).toUpperCase()==="FALSE") throw new Error("Código desativado.");
-    const last=votes.getLastRow();
-    if (last>=2) {
-      const prior=votes.getRange(2,2,last-1,2).getValues();
-      if (prior.some(r=>String(r[0])===digest && String(r[1])===projectId))
-        throw new Error("Este código já avaliou este projeto.");
-    }
+    const state=participationState_(votes,digest,Date.now());
+    if (state.projectIds.includes(projectId)) throw new Error("Este código já avaliou este projeto.");
+    if (state.waitMs>0) throw new Error("Pausa obrigatória. Aguarde "+Math.ceil(state.waitMs/60000)+" minuto(s) para continuar.");
     const weighted=Number((scores[0]*.30+scores[1]*.30+scores[2]*.25+scores[3]*.15).toFixed(2));
     votes.appendRow([p.requestId,digest,projectId,scores[0],scores[1],scores[2],scores[3],weighted,new Date()]);
+    SpreadsheetApp.flush();
     return { accepted:true,score:weighted,message:"Avaliação registrada com sucesso." };
   } finally { lock.releaseLock(); }
 }
@@ -361,4 +360,72 @@ function redeemInvitationPage_(e) {
     } finally {lock.releaseLock();}
     return HtmlService.createHtmlOutput('<meta name="viewport" content="width=device-width,initial-scale=1"><h1>Seu código individual</h1><p style="font: bold 28px monospace">'+code+'</p><p>Guarde seu código em segurança. Volte ao site para avaliar quando a votação estiver aberta.</p><a target="_top" href="https://ivanildoferreira-wq.github.io/repositor-gpt/">Voltar ao Universo IF Avalia</a>');
   } catch(err) { return HtmlService.createHtmlOutput('<h1>Não foi possível resgatar o convite</h1><p>Confira o convite com a organização e tente novamente.</p>'); }
+}
+
+/** v2.1: identificação anônima do navegador, sem MAC, e-mail ou IP. */
+function hmacHex_(value, key) {
+  return Utilities.computeHmacSha256Signature(value,key).map(b=>(b<0?b+256:b).toString(16).padStart(2,"0")).join("").toUpperCase();
+}
+function boundedConfig_(key,fallback,min,max) {
+  const v=Number(configValue_(key,String(fallback)));
+  return Number.isInteger(v)&&v>=min&&v<=max?v:fallback;
+}
+// Função pura: cada lote de N projetos distintos exige pausa após o último voto do lote.
+function calculateParticipation_(records,now,limit,minutes) {
+  const seen=new Set(), times=[];
+  records.slice().sort((a,b)=>a.time-b.time).forEach(r=>{
+    if(!r.id||!Number.isFinite(r.time)||seen.has(r.id))return;
+    seen.add(r.id);times.push(r.time);
+  });
+  const total=seen.size, mod=total%limit;
+  const waitMs=total>0&&mod===0?Math.max(0,times[total-1]+minutes*60000-now):0;
+  return {projectIds:Array.from(seen),total:total,remaining:waitMs>0?0:limit-mod,waitMs:waitMs,limit:limit,minutes:minutes};
+}
+function participationState_(votes,digest,now) {
+  const last=votes.getLastRow();
+  const rows=last>1?votes.getRange(2,2,last-1,8).getValues():[];
+  const records=rows.filter(r=>String(r[0])===digest).map(r=>({id:String(r[1]),time:new Date(r[7]).getTime()}));
+  return calculateParticipation_(records,now,boundedConfig_("limite_lote",5,1,46),boundedConfig_("pausa_minutos",10,1,1440));
+}
+function participantResponse_(e) {
+  let requestId="";
+  try {
+    const p=JSON.parse(e.parameter.payload||"{}");
+    requestId=String(p.requestId||"");
+    if(!/^[A-F0-9]{32}$/i.test(requestId))throw new Error("Solicitação inválida.");
+    const result=anonymousParticipant_(p);
+    return participantOutput_(e,{ok:true,result:result,requestId:requestId});
+  } catch(err) {
+    return participantOutput_(e,{ok:false,error:safeMessage_(err),requestId:requestId});
+  }
+}
+function participantOutput_(e,data) {
+  if(e.parameter.transport!=="iframe")return json_(data);
+  return HtmlService.createHtmlOutput('<!doctype html><meta charset="utf-8"><script>top.postMessage('+JSON.stringify({type:"UNIVERSO_IF_PARTICIPANT",...data}).replace(/</g,"\\u003c")+', "https://ivanildoferreira-wq.github.io");</script>');
+}
+function anonymousParticipant_(p) {
+  const token=String(p.token||"").toUpperCase();
+  if(!/^[A-F0-9]{64}$/.test(token))throw new Error("Identificação inválida.");
+  const pepper=requiredProp_("CODE_PEPPER");
+  const code=hmacHex_("browser-code:"+token,pepper).slice(0,12);
+  const marker="browser:"+hmacHex_("browser-marker:"+token,pepper);
+  const digest=hashCode_(code,pepper);
+  const lock=LockService.getScriptLock();lock.waitLock(20000);
+  try {
+    const ss=getSpreadsheet_(),codes=ss.getSheetByName("Codigos"),votes=ss.getSheetByName("Avaliacoes");
+    const open=configValue_("votacao_aberta","FALSE")==="TRUE";
+    const row=findValue_(codes,1,digest);
+    if(row) {
+      if(String(codes.getRange(row,4).getValue())!==marker||String(codes.getRange(row,2).getValue()).toUpperCase()!=="TRUE")throw new Error("Código indisponível. Procure a organização.");
+    } else {
+      if(!p.create)return {registered:false,open:open};
+      // A emissão pode ser autorizada separadamente para um teste com a votação fechada.
+      if(!open&&configValue_("emissao_anonima_aberta","FALSE")!=="TRUE")throw new Error("A emissão de códigos ainda não foi liberada.");
+      const last=codes.getLastRow();
+      const issued=last>1?codes.getRange(2,4,last-1,1).getValues().filter(r=>String(r[0]).startsWith("browser:")).length:0;
+      if(issued>=boundedConfig_("limite_codigos_anonimos",1000,1,10000))throw new Error("Limite de códigos atingido. Procure a organização.");
+      codes.appendRow([digest,true,new Date(),marker]);SpreadsheetApp.flush();
+    }
+    return {registered:true,code:code,open:open,...participationState_(votes,digest,Date.now())};
+  } finally {lock.releaseLock();}
 }

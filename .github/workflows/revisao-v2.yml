@@ -1,7 +1,7 @@
 name: Revisao v2 - testes isolados
 on:
   push:
-    branches: [revisao-v2]
+    branches: [revisao-v2, revisao-v2-1]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -20,6 +20,8 @@ jobs:
       - run: npm test
       - run: npm run build
       - run: node --check < apps-script/Code.gs
+      - name: Validate server cooldown rules
+        run: node tests/participation.cjs
       - run: npm install --no-save @playwright/test@1.56.1
       - name: Install Chromium
         run: npx playwright install chromium
@@ -40,6 +42,11 @@ jobs:
               await page.route('**/*',async route=>{
                 const url=new URL(route.request().url());
                 if(url.origin==='http://127.0.0.1:4173') return route.continue();
+                if(route.request().method()==='POST' && route.request().postData()?.includes('publicAction=participant')){
+                  const payload=JSON.parse(new URLSearchParams(route.request().postData()).get('payload'));
+                  const result={registered:true,open:true,code:'ABCDEF123456',projectIds:['EXT-001','EXT-002','EXT-003','EXT-004','EXT-005'],total:5,remaining:0,waitMs:600000,limit:5,minutes:10};
+                  return route.fulfill({contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({ok:true,result,requestId:payload.requestId})});
+                }
                 if(route.request().method()==='GET' && url.searchParams.has('callback')){
                   const cb=url.searchParams.get('callback');
                   return route.fulfill({contentType:'application/javascript',body:cb+'({ok:true,result:[]});'});
@@ -79,6 +86,19 @@ jobs:
               expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth)).toBe(true);
               await page.getByRole('button',{name:'Ranking real'}).click();
               await expect(page.locator('.ranking-column')).toHaveCount(3);
+              await page.locator('nav:visible').getByRole('button',{name:'Projetos',exact:true}).click();
+              await page.getByRole('button',{name:'Obter meu código',exact:true}).click();
+              await expect(page.getByText('Seu código individual está ativo')).toBeVisible();
+              await expect(page.getByText('5 projetos avaliados')).toBeVisible();
+              await expect(page.locator('.cooldown')).toContainText('Aguarde');
+              await page.locator('.project-card').filter({hasText:'EXT-001'}).click();
+              await expect(page.getByRole('button',{name:'Projeto já avaliado'})).toBeDisabled();
+              await page.getByRole('button',{name:'Voltar aos projetos'}).click();
+              await page.locator('.project-card').filter({hasText:'EXT-006'}).click();
+              await page.getByRole('button',{name:'Avaliar este projeto'}).click();
+              await expect(page.getByRole('button',{name:'Enviar avaliação'})).toBeDisabled();
+              await page.reload();
+              await expect(page.getByText('Seu código individual está ativo')).toBeVisible();
               expect(errors).toEqual([]);
             });
           }

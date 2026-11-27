@@ -81,3 +81,9 @@ button:disabled{opacity:.65;cursor:not-allowed}
 .project-card .project-cta{display:flex;align-items:center;justify-content:center;gap:6px;border-radius:9px;padding:10px 12px;min-height:40px;background:#1b5038;color:white;font-weight:700;font-size:12px}
 @media(max-width:700px){.catalog-heading{align-items:flex-start;flex-wrap:wrap}.catalog-emblem{width:44px;height:44px;border-radius:12px}.catalog-emblem svg{width:23px}.catalog-intro{gap:10px}.catalog-intro h2{font-size:26px}.catalog-count{margin-left:54px}.catalog-filters .search{flex:auto}.catalog-select{width:100%}.project-card{padding:18px;min-height:210px}.project-card .project-cta{min-height:44px}.project-card .card-kicker{padding-right:40px}.project-card strong{font-size:16px}}
 @media(prefers-reduced-motion:reduce){.project-card:hover{transform:none}}
+
+/* Participação anônima e pausa de avaliações */
+.participation-panel{max-width:1112px;margin:16px auto;padding:20px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px;background:#eaf7ef;border:1px solid #b7d9c7;border-radius:16px;color:#164b32}
+.participation-panel>div{flex:1;min-width:0}.participation-panel p{margin:5px 0;font-size:14px;line-height:1.5}.participation-panel>small{width:100%;color:#52665b;font-size:12px}.participation-panel .cooldown{background:#fff2d4;color:#795107;border-radius:8px;padding:10px;font-weight:700;font-variant-numeric:tabular-nums}.participant-summary{font-size:14px}.evaluation-card>.primary:not(.full){margin-bottom:16px}
+@media(max-width:1160px){.participation-panel{margin-left:20px;margin-right:20px}}
+@media(max-width:700px){.participation-panel{margin:12px 14px;padding:16px}.participation-panel>div,.participation-panel>.primary{width:100%;flex:auto}}

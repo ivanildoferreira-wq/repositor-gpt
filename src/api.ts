@@ -87,3 +87,46 @@ export function enviarAvaliacao(payload:EnvioAvaliacao):Promise<{accepted:boolea
     form.submit();
   });
 }
+
+export type Participant = { registered:boolean; open:boolean; code?:string; projectIds?:string[]; total?:number; remaining?:number; waitMs?:number; limit?:number; minutes?:number };
+const participantKey='universo-if-browser-v1';
+export function existingBrowserToken():string|null {
+  try { const t=localStorage.getItem(participantKey); return t&&/^[A-F0-9]{64}$/.test(t)?t:null; } catch {return null;}
+}
+export function browserToken():string {
+  const old=existingBrowserToken(); if(old)return old;
+  const token=Array.from(crypto.getRandomValues(new Uint8Array(32)),b=>b.toString(16).padStart(2,'0')).join('').toUpperCase();
+  try {localStorage.setItem(participantKey,token);if(localStorage.getItem(participantKey)!==token)throw new Error();}catch{throw new Error('Permita o armazenamento local do navegador para manter seu código individual.');}
+  return token;
+}
+export async function participantApi(token:string,create:boolean):Promise<Participant> {
+  const requestId=crypto.randomUUID().replace(/-/g,'');
+  const payload=JSON.stringify({token,create,requestId});
+  const fields={publicAction:'participant',payload};
+  // POST evita colocar o identificador privado na URL. Repetição é idempotente.
+  const controller=new AbortController();
+  const timer=window.setTimeout(()=>controller.abort(),15000);
+  let response:ApiEnvelope<Participant>|undefined;
+  try {
+    const res=await fetch(endpoint,{method:'POST',body:new URLSearchParams(fields),signal:controller.signal,credentials:'omit'});
+    if(res.ok)response=await res.json();
+  }catch{/* Alguns ambientes Google não disponibilizam CORS; usar o transporte alternativo. */}
+  finally{window.clearTimeout(timer);}
+  if(response&&typeof response.ok==='boolean'){
+    if(!response.ok||!response.result)throw new Error(response.error||'Não foi possível obter seu código.');
+    return response.result;
+  }
+  return new Promise((resolve,reject)=>{
+    const frame=document.createElement('iframe');frame.name='participant_'+requestId;frame.style.display='none';
+    const form=document.createElement('form');form.method='POST';form.action=endpoint;form.target=frame.name;form.style.display='none';
+    for(const [name,value] of Object.entries({...fields,transport:'iframe'})){const input=document.createElement('input');input.type='hidden';input.name=name;input.value=value;form.appendChild(input);}
+    const timeout=window.setTimeout(()=>finish(new Error('Não foi possível confirmar seu código. Tente novamente neste mesmo navegador.')),25000);
+    function finish(error?:Error,result?:Participant){window.clearTimeout(timeout);window.removeEventListener('message',onMessage);form.remove();frame.remove();if(error)reject(error);else resolve(result!);}
+    function onMessage(event:MessageEvent){
+      const d=event.data;
+      if(!/^https:\/\/(?:script\.google\.com|(?:[a-z0-9-]+\.)?googleusercontent\.com)$/.test(event.origin)||d?.type!=='UNIVERSO_IF_PARTICIPANT'||d.requestId!==requestId)return;
+      if(d.ok&&d.result)finish(undefined,d.result);else finish(new Error(d.error||'Não foi possível obter seu código.'));
+    }
+    window.addEventListener('message',onMessage);document.body.append(frame,form);form.submit();
+  });
+}
