@@ -1,7 +1,7 @@
 name: Revisao v2 - testes isolados
 on:
   push:
-    branches: [revisao-v2, revisao-v2-1]
+    branches: [revisao-v2, revisao-v2-1, catalogo-intercalado]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -55,9 +55,22 @@ jobs:
               });
               await page.goto('http://127.0.0.1:4173/repositor-gpt/');
               await expect(page.locator('.project-card')).toHaveCount(46);
+              const cards=page.locator('.project-card');
+              const assertMixed=async()=>{
+                await expect(cards).toHaveCount(46);
+                const labels=await cards.locator('.modality-label').allTextContents();
+                expect(labels.slice(0,44)).toEqual(Array.from({length:44},(_,i)=>i%2===0?'Mostra de Extensão':'Mostra Nacional'));
+                expect(labels.slice(44)).toEqual(['Mostra Nacional','Mostra Nacional']);
+              };
+              await assertMixed();
               await page.getByRole('combobox',{name:'Filtrar por modalidade'}).selectOption('Mostra de Extensão');
-              await expect(page.locator('.project-card').first()).toContainText('Mostra de Extensão');
+              await expect(cards).toHaveCount(22);
+              expect((await cards.locator('.modality-label').allTextContents()).every(x=>x==='Mostra de Extensão')).toBe(true);
+              await page.getByRole('combobox').selectOption('Mostra Nacional');
+              await expect(cards).toHaveCount(24);
+              expect((await cards.locator('.modality-label').allTextContents()).every(x=>x==='Mostra Nacional')).toBe(true);
               await page.getByRole('combobox').selectOption('Todas');
+              await assertMixed();
               await page.locator('.project-card').first().click();
               await page.getByRole('button',{name:'Avaliar este projeto'}).click();
               await expect(page.getByText('0 de 4 critérios preenchidos')).toBeVisible();

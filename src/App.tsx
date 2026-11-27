@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, useRef } from 'react';
 import { carregarProjetos, carregarRanking, enviarAvaliacao as enviarAvaliacaoApi, participantApi, browserToken, existingBrowserToken, type Participant } from './api';
 import { Search, Grid3X3, Trophy, ArrowLeft, Star, AlertCircle, Layers3, BookOpen, Users, Leaf, Cpu, FlaskConical, GraduationCap, CalendarDays, ArrowRight, SlidersHorizontal, X, Brain } from 'lucide-react';
 import rawCatalog from './catalogo.json';
-import { calcularNota, CRITERIOS, normalizarBusca, validarCatalogo, type Projeto, type Modalidade } from './domain';
+import { calcularNota, CRITERIOS, normalizarBusca, validarCatalogo, intercalarModalidades, type Projeto, type Modalidade } from './domain';
 
 type Aba = 'projetos' | 'ranking' | 'avaliar';
 const catalogoInicial = validarCatalogo(rawCatalog);
@@ -89,10 +89,13 @@ export default function App() {
     return () => {ativo=false;};
   }, [aba, atualizacao]);
 
-  const filtrados = useMemo(() => catalogo.filter(p =>
-    (modalidade === 'Todas' || p.modalidade === modalidade) &&
-    normalizarBusca([p.titulo,p.id,p.area_tematica].join(' ')).includes(normalizarBusca(busca))
-  ), [catalogo, busca, modalidade]);
+  const filtrados = useMemo(() => {
+    const resultados=catalogo.filter(p =>
+      (modalidade === 'Todas' || p.modalidade === modalidade) &&
+      normalizarBusca([p.titulo,p.id,p.area_tematica].join(' ')).includes(normalizarBusca(busca))
+    );
+    return modalidade==='Todas'?intercalarModalidades(resultados):resultados;
+  }, [catalogo, busca, modalidade]);
 
   const notaPrevista = notas.every(n => n >= 1) ? calcularNota(notas).toFixed(2) : '—';
   const rankingExibido = modoDemonstracao ? gerarRankingDemonstracao(catalogo) : ranking;
