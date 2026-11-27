@@ -122,21 +122,27 @@ jobs:
           }
 
           test('envio com acesso confirmado durante consulta lenta',async({page})=>{
-            let calls=0, releaseRefresh;
-            const pendingRefresh=new Promise(resolve=>{releaseRefresh=resolve});
             let sent=false;
+            await page.addInitScript(()=>{
+              const original=window.fetch.bind(window);
+              window.__participantCalls=0;
+              window.__voteSent=false;
+              window.fetch=async(input,options)=>{
+                if(!(options?.body instanceof URLSearchParams)||options.body.get('publicAction')!=='participant')return original(input,options);
+                const p=JSON.parse(options.body.get('payload'));
+                window.__participantCalls++;
+                if(window.__participantCalls===2)await new Promise(resolve=>{window.__releaseParticipant=resolve});
+                const voted=window.__voteSent;
+                return new Response(JSON.stringify({ok:true,result:{registered:true,open:true,code:'ABCDEF123456',projectIds:voted?['EXT-001']:[],total:voted?1:0,remaining:voted?4:5,waitMs:0,limit:5,minutes:10},requestId:p.requestId}),{status:200,headers:{'content-type':'application/json'}});
+              };
+            });
             await page.route('**/*',async route=>{
               const url=new URL(route.request().url());
               if(url.origin==='http://127.0.0.1:4173')return route.continue();
               const fields=new URLSearchParams(route.request().postData()||'');
-              if(fields.get('publicAction')==='participant'){
-                calls++;
-                if(calls===2)await pendingRefresh;
-                const p=JSON.parse(fields.get('payload'));
-                return route.fulfill({contentType:'application/json',headers:{'access-control-allow-origin':'*'},body:JSON.stringify({ok:true,result:{registered:true,open:true,code:'ABCDEF123456',projectIds:sent?['EXT-001']:[],total:sent?1:0,remaining:sent?4:5,waitMs:0,limit:5,minutes:10},requestId:p.requestId})});
-              }
               if(fields.get('publicAction')==='submitEvaluation'){
                 sent=true;
+                await page.evaluate(()=>{window.__voteSent=true});
                 return route.fulfill({contentType:'text/html',body:'<html></html>'});
               }
               if(url.searchParams.has('callback')){
@@ -156,7 +162,7 @@ jobs:
             await expect(page.getByRole('button',{name:'Enviar avaliação'})).toBeEnabled();
             await page.getByRole('button',{name:'Enviar avaliação'}).click();
             await expect(page.getByRole('button',{name:'Avaliação registrada'})).toBeVisible({timeout:12000});
-            releaseRefresh();
+            await page.evaluate(()=>window.__releaseParticipant());
             await expect(page.getByText('1 projetos avaliados')).toBeVisible();
             expect(sent).toBe(true);
           });
