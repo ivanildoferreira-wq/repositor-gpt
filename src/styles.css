@@ -89,3 +89,47 @@ button:disabled{opacity:.65;cursor:not-allowed}
 @media(max-width:700px){.participation-panel{margin:12px 14px;padding:16px}.participation-panel>div,.participation-panel>.primary{width:100%;flex:auto}}
 
 .rank-description .rank-tie{color:#775100;font-weight:600;font-size:11px;line-height:1.4}
+
+/* Ranking editorial — paleta institucional e pódio acessível */
+.ranking-content{max-width:1260px}
+.ranking-heading{align-items:center;margin-bottom:24px}
+.ranking-heading-inner{display:flex;align-items:center;gap:16px;min-width:0}
+.ranking-emblem{display:grid;place-items:center;flex-shrink:0;width:64px;height:64px;border-radius:19px;background:linear-gradient(145deg,#286344,#123d32);color:#fff;box-shadow:0 8px 20px #123d3226}
+.ranking-heading h2{font-size:clamp(27px,3.4vw,40px);line-height:1.15;letter-spacing:-1.4px}
+.ranking-heading .muted{font-size:14px;line-height:1.5;margin:8px 0 0}
+.ranking-toolbar{display:flex;flex-wrap:wrap;gap:9px;margin-bottom:18px}
+.ranking-toolbar button{display:flex;align-items:center;justify-content:center;gap:8px;border:1px solid #bdcfc5;border-radius:10px;background:#fff;color:#254b3b;padding:10px 16px;font:700 13px 'DM Sans',sans-serif;min-height:44px;cursor:pointer}
+.ranking-toolbar button[aria-pressed=true]{background:#123d32;border-color:#123d32;color:#fff}
+.ranking-toolbar button:disabled{opacity:.6;cursor:not-allowed}
+.ranking-content .ranking-search{margin-bottom:10px}
+.ranking-content .ranking-search .search{min-width:0;height:54px;border-radius:12px;border-color:#bdcfc5}
+.ranking-demo-banner{display:flex;align-items:center;gap:10px;padding:14px 16px;border:1px solid #d8c697;border-radius:12px;background:#fff8e7;color:#664708;font-size:13px;line-height:1.5;font-weight:700}
+.ranking-demo-banner svg,.ranking-total svg{flex-shrink:0}
+.ranking-total{display:flex;align-items:center;gap:8px;color:#254b3b;font-size:14px;font-weight:700;margin:22px 0 14px}
+.ranking-columns{gap:16px}
+.ranking-columns .ranking-column{--column:#123d32;--column-tint:#e7f0eb;min-width:0;padding:0 12px 14px;border:1px solid #d4e0d8;background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 5px 19px #123d320d}
+.ranking-columns .ranking-nacional{--column:#286344;--column-tint:#e4f0e6}
+.ranking-columns .ranking-extensao{--column:#234b76;--column-tint:#e6eef8}
+.ranking-column-head{display:flex;align-items:center;gap:11px;background:var(--column);color:#fff;margin:0 -12px 14px;padding:18px 14px;min-height:89px}
+.ranking-column-icon{flex-shrink:0;width:43px;height:43px;display:grid;place-items:center;border:1px solid #ffffff66;border-radius:12px;background:#ffffff12}
+.ranking-column-head h3{color:#fff;font-size:17px;line-height:1.25;letter-spacing:-.3px}
+.ranking-column-head p{margin:5px 0 0;font-size:12px;color:#fff;line-height:1.4}
+.ranking-list{gap:11px}
+.ranking-columns .rank-item{--medal:#254b3b;--medal-tint:#eaf2ed;display:grid;grid-template-columns:43px minmax(0,1fr) 49px;gap:10px;padding:13px 10px;background:#f8faf8;border:1px solid #dce5de;border-radius:13px;align-items:start;min-width:0}
+.ranking-columns .rank-1{--medal:#694606;--medal-tint:#f8e9b8;background:#fff9e9;border-color:#d5b567}
+.ranking-columns .rank-2{--medal:#334c68;--medal-tint:#dce6f1;background:#f0f5fa;border-color:#b2c3d6}
+.ranking-columns .rank-3{--medal:#743b1e;--medal-tint:#f5dfcf;background:#fff2e8;border-color:#d5a68a}
+.ranking-columns .rank-position{display:grid;place-items:center;gap:5px;border-radius:10px;padding:8px 2px;background:var(--medal-tint);color:var(--medal);font:800 20px/1.1 Manrope,sans-serif;min-width:0}
+.ranking-columns .rank-description{gap:7px;min-width:0}
+.ranking-columns .rank-description strong{color:#18382c;font-size:14px;line-height:1.45;overflow-wrap:anywhere}
+.ranking-columns .rank-description small{color:#43594c;font-size:11px;line-height:1.4}
+.ranking-columns .rank-description .rank-tie{color:#6b480b;font-weight:700}
+.rank-score-block{display:grid;justify-items:end;gap:3px;min-width:0}
+.rank-score-block .rank-score{font:800 20px/1.15 Manrope,sans-serif;font-variant-numeric:tabular-nums;color:var(--medal)}
+.rank-score-block small{color:#43594c;font-size:11px}
+.ranking-columns .rank-description progress{appearance:none;border:0;border-radius:20px;height:7px;overflow:hidden;background:#dce5df;accent-color:var(--column)}
+.ranking-columns .rank-description progress::-webkit-progress-bar{background:#dce5df;border-radius:20px}
+.ranking-columns .rank-description progress::-webkit-progress-value{background:var(--column);border-radius:20px}
+.ranking-columns .rank-description progress::-moz-progress-bar{background:var(--column);border-radius:20px}
+@media(max-width:1000px){.ranking-columns .rank-item{grid-template-columns:48px minmax(0,1fr) 52px}.ranking-columns .rank-description strong{font-size:15px}}
+@media(max-width:700px){.ranking-heading-inner{gap:10px}.ranking-emblem{width:48px;height:48px;border-radius:13px}.ranking-emblem svg{width:24px}.ranking-heading h2{font-size:26px}.ranking-toolbar button{flex:1 1 auto}.ranking-content .ranking-search .search{flex:auto}.ranking-columns .rank-item{grid-template-columns:39px minmax(0,1fr) 43px;gap:8px;padding:12px 8px}.ranking-columns .rank-description strong{font-size:14px}.rank-score-block .rank-score{font-size:18px}.ranking-columns .rank-position{font-size:18px}.ranking-demo-banner{align-items:flex-start}}
