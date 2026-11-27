@@ -45,3 +45,39 @@ button:disabled{opacity:.65;cursor:not-allowed}
 @media(max-width:1000px){.ranking-columns{grid-template-columns:1fr}.project-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:700px){.project-grid{grid-template-columns:1fr}.project-card{min-height:180px}.hero{gap:10px}.hero h1{font-size:clamp(27px,8vw,40px);overflow-wrap:anywhere}.academic-tag{display:none}.content{padding-left:14px;padding-right:14px}.evaluation-card{padding:16px}.rating{grid-row:auto}.mobile-nav{z-index:20}.mobile-nav button{min-width:90px}.section-heading{gap:10px}.ranking-column{padding:12px}.rank-item{grid-template-columns:36px minmax(0,1fr) auto}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}.project-card:hover{transform:none}}
+
+/* Catálogo editorial: inspirado na prévia aprovada, sem imagens pesadas. */
+.catalog-heading{align-items:center;margin-bottom:24px;gap:16px}
+.catalog-intro{display:flex;align-items:center;gap:15px;min-width:0}
+.catalog-intro h2{font-size:clamp(27px,3.5vw,40px);letter-spacing:-1.5px;line-height:1.1}
+.catalog-intro p:not(.eyebrow){color:#52665b;margin:9px 0 0;font-size:14px;line-height:1.5}
+.catalog-emblem{display:grid;place-items:center;flex-shrink:0;width:62px;height:62px;border-radius:18px;background:linear-gradient(145deg,#45794a,#153d2a);color:white;box-shadow:0 7px 16px #17432d25}
+.catalog-count{white-space:nowrap;background:#e5eddf;color:#234d34;padding:9px 14px;border-radius:30px;font-size:13px;font-weight:700}
+.catalog-filters{gap:12px;margin-bottom:24px}
+.catalog-filters .search{height:54px;border:1px solid #b9cbbd;border-radius:12px;color:#1b5038;box-shadow:0 3px 10px #18382c08;min-width:0}
+.catalog-select{display:flex;align-items:center;gap:9px;color:#1b5038;background:white;border:1px solid #b9cbbd;border-radius:12px;padding:0 12px;min-height:54px}
+.catalog-select select{border:0;min-width:0;padding:0 4px;font-size:14px;flex:1}
+.clear-search{border:0;background:transparent;color:#315541;display:grid;place-items:center;flex-shrink:0;width:44px;height:44px;cursor:pointer}
+.project-grid{gap:18px}
+.project-card{--theme:#2b6344;--tint:#e7f0e1;isolation:isolate;overflow:hidden;padding:20px;min-height:235px;background:linear-gradient(150deg,#fff 65%,#f9faf7);border:1px solid #cfdace;border-radius:18px;box-shadow:0 5px 15px #1d3f2610;transition:box-shadow .2s,transform .2s,border-color .2s}
+.project-card.extensao{border-top:1px solid #cfdace}
+.project-card.tema-tecnologia{--theme:#315b87;--tint:#e6eef9}
+.project-card.tema-bemestar{--theme:#765387;--tint:#f0e8f5}
+.project-card.tema-natureza{--theme:#326a3d;--tint:#e1efdf}
+.project-card.tema-cultura{--theme:#855922;--tint:#f7eddc}
+.project-card.tema-ciencia{--theme:#216d70;--tint:#e1f1ef}
+.project-card.tema-sociedade{--theme:#69528a;--tint:#eee9f6}
+.project-card.tema-educacao{--theme:#2b6344;--tint:#e7f0e1}
+.project-card:hover{border-color:var(--theme);box-shadow:0 10px 22px #1739231d;transform:translateY(-3px)}
+.project-symbol{position:absolute;right:0;top:0;width:64px;height:62px;display:grid;place-items:center;padding-left:8px;padding-bottom:7px;background:var(--tint);color:var(--theme);border-radius:0 17px 0 44px;z-index:-1}
+.project-card .card-kicker{padding-right:40px;gap:6px;line-height:1.35}
+.project-card .project-id,.project-card.extensao .project-id{padding:0;background:none;color:#18382c;font-size:12px;font-weight:800;margin:0}
+.modality-label{border-radius:20px;padding:5px 8px;background:var(--tint);color:var(--theme);font-size:10px;letter-spacing:.1px;font-weight:800}
+.project-card strong{font-size:16px;line-height:1.45;margin:17px 0 12px;letter-spacing:-.2px}
+.project-card .card-area{display:flex;align-items:flex-start;gap:7px;font-size:13px;line-height:1.4;color:#43594c;margin-bottom:16px}
+.card-area svg,.project-date svg{flex-shrink:0;color:var(--theme)}
+.project-card .card-foot{align-items:center;padding-top:14px;gap:9px;border-top:1px solid #e1e8df}
+.project-card .project-date{display:flex;align-items:center;gap:6px;color:#40594b;font-size:12px;font-weight:500}
+.project-card .project-cta{display:flex;align-items:center;justify-content:center;gap:6px;border-radius:9px;padding:10px 12px;min-height:40px;background:#1b5038;color:white;font-weight:700;font-size:12px}
+@media(max-width:700px){.catalog-heading{align-items:flex-start;flex-wrap:wrap}.catalog-emblem{width:44px;height:44px;border-radius:12px}.catalog-emblem svg{width:23px}.catalog-intro{gap:10px}.catalog-intro h2{font-size:26px}.catalog-count{margin-left:54px}.catalog-filters .search{flex:auto}.catalog-select{width:100%}.project-card{padding:18px;min-height:210px}.project-card .project-cta{min-height:44px}.project-card .card-kicker{padding-right:40px}.project-card strong{font-size:16px}}
+@media(prefers-reduced-motion:reduce){.project-card:hover{transform:none}}
