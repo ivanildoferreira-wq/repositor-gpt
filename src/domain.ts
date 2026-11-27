@@ -26,3 +26,16 @@ export function validarCatalogo(data: unknown): Projeto[] {
   if (ids.size !== projects.length) throw new Error('Há IDs duplicados no catálogo.');
   return projects;
 }
+
+/** Alterna as modalidades sem alterar a ordem original dentro de cada grupo. */
+export function intercalarModalidades(projetos: Projeto[]): Projeto[] {
+  const extensao=projetos.filter(p=>p.modalidade==='Mostra de Extensão');
+  const nacional=projetos.filter(p=>p.modalidade==='Mostra Nacional');
+  const outros=projetos.filter(p=>p.modalidade!=='Mostra de Extensão'&&p.modalidade!=='Mostra Nacional');
+  const resultado:Projeto[]=[];
+  for(let i=0;i<Math.max(extensao.length,nacional.length);i++){
+    if(extensao[i])resultado.push(extensao[i]);
+    if(nacional[i])resultado.push(nacional[i]);
+  }
+  return resultado.concat(outros);
+}
