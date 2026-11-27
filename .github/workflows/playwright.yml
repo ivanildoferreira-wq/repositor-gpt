@@ -1,6 +1,9 @@
 name: Playwright - site publicado
 on:
   workflow_dispatch:
+  workflow_run:
+    workflows: ['Build and deploy to GitHub Pages']
+    types: [completed]
   push:
     paths:
       - '.github/workflows/playwright.yml'
@@ -8,6 +11,7 @@ permissions:
   contents: read
 jobs:
   smoke:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -33,6 +37,10 @@ jobs:
               await search.fill('zzzz_sem_resultado_123');
               await expect(page.getByText('Nenhum projeto encontrado')).toBeVisible();
               await search.clear();
+              await expect(page.getByRole('link',{name:'Obter meu código'})).toHaveAttribute('href', /action=codePage/);
+              await page.locator('.filters select').selectOption('Mostra de Extensão');
+              await expect(page.locator('.project-card').first()).toContainText('Mostra de Extensão');
+              await page.locator('.filters select').selectOption('Todas');
               await page.locator('.project-card').first().click();
               await page.getByRole('button',{name:'Avaliar este projeto'}).click();
               await expect(page.locator('.criterion')).toHaveCount(4);
@@ -47,6 +55,7 @@ jobs:
               await expect(page.locator('.project-card').first()).toBeVisible();
               await page.getByRole('button',{name:'Ranking real'}).click();
               await expect(page.getByRole('status')).toHaveCount(0);
+              await expect(page.getByRole('button',{name:'Atualizar ranking'})).toBeVisible();
               expect(errors).toEqual([]);
             });
           }
