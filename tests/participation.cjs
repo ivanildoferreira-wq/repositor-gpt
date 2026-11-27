@@ -1,0 +1,14 @@
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict');
+const context=vm.createContext({});
+vm.runInContext(fs.readFileSync('apps-script/Code.gs','utf8'),context);
+const fn=context.calculateParticipation_;
+const t=1700000000000, make=n=>Array.from({length:n},(_,i)=>({id:'P'+i,time:t+i*1000}));
+assert.equal(fn(make(0),t,5,10).remaining,5);
+assert.equal(fn(make(4),t+4000,5,10).remaining,1);
+assert.equal(fn(make(5),t+4000,5,10).waitMs,600000);
+assert.equal(fn(make(5),t+604000,5,10).waitMs,0);
+assert.equal(fn(make(5),t+604000,5,10).remaining,5);
+assert.equal(fn([...make(5),{id:'P0',time:t+5000}],t+5000,5,10).total,5);
+assert.equal(fn([...make(5),{id:'P5',time:t+604001}],t+604001,5,10).remaining,4);
+assert.equal(fn(make(10),t+9000,5,10).waitMs,600000);
+console.log('8 verificações de regras de participação aprovadas');
