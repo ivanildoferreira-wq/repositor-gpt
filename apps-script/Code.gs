@@ -6,6 +6,7 @@
 function doGet(e) {
   const action = String((e && e.parameter && e.parameter.action) || "health");
   try {
+    if (action === "codePage") return codePage_();
     let result;
     if (action === "projects") result = publicProjects_();
     else if (action === "ranking") result = publicRanking_();
@@ -19,6 +20,7 @@ function doGet(e) {
 }
 function doPost(e) {
   try {
+    if (e && e.parameter && e.parameter.publicAction === "redeemInvitation") return redeemInvitationPage_(e);
     // Envio público por formulário HTML direcionado a iframe: evita preflight CORS.
     if (e && e.parameter && e.parameter.publicAction === "submitEvaluation") {
       const payload = JSON.parse(e.parameter.payload || "{}");
@@ -327,4 +329,35 @@ function diagnosticarUniversoIF() {
   };
   Logger.log(JSON.stringify(result));
   return result;
+}
+
+/** Convites individuais: emissão manual pela organização; resgate idempotente. */
+function gerarConvitesUniversoIF_5() {
+  const tokens = Array.from({length:5}, () => {
+    const id = Utilities.getUuid().replace(/-/g,"").toUpperCase();
+    return id + "." + hashCode_("invite:"+id,requiredProp_("CODE_PEPPER"));
+  });
+  Logger.log(JSON.stringify(tokens));
+  return tokens;
+}
+function codePage_() {
+  return HtmlService.createHtmlOutput('<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{font:18px system-ui;max-width:520px;margin:40px auto;padding:20px;color:#164b32}input,button{box-sizing:border-box;width:100%;padding:14px;margin:12px 0;font:inherit}button{background:#166534;color:white;border:0;border-radius:8px}</style><h1>Universo IF Avalia</h1><p>Resgate seu código individual com o convite entregue pela organização. O mesmo convite sempre retorna o mesmo código.</p><form method="post" target="_top" action="'+ScriptApp.getService().getUrl()+'"><input type="hidden" name="publicAction" value="redeemInvitation"><label>Convite individual<input name="invitation" required autocomplete="off" maxlength="97"></label><button>Gerar meu código</button></form>');
+}
+function redeemInvitationPage_(e) {
+  try {
+    const token=String(e.parameter.invitation||"").trim().toUpperCase();
+    if (!/^[A-F0-9]{32}\.[A-F0-9]{64}$/.test(token)) throw new Error("Convite inválido.");
+    const parts=token.split("."), pepper=requiredProp_("CODE_PEPPER");
+    if (!constantTimeEquals_(parts[1],hashCode_("invite:"+parts[0],pepper))) throw new Error("Convite inválido.");
+    const code=hashCode_("redeem:"+parts[0],pepper).slice(0,12);
+    const digest=hashCode_(code,pepper), marker="convite:"+hashCode_("marker:"+parts[0],pepper);
+    const lock=LockService.getScriptLock(); lock.waitLock(20000);
+    try {
+      const sh=getSpreadsheet_().getSheetByName("Codigos");
+      const row=findValue_(sh,1,digest);
+      if(row && (String(sh.getRange(row,4).getValue())!==marker || String(sh.getRange(row,2).getValue()).toUpperCase()!=="TRUE")) throw new Error("Convite indisponível.");
+      if(!row) { sh.appendRow([digest,true,new Date(),marker]); SpreadsheetApp.flush(); }
+    } finally {lock.releaseLock();}
+    return HtmlService.createHtmlOutput('<meta name="viewport" content="width=device-width,initial-scale=1"><h1>Seu código individual</h1><p style="font: bold 28px monospace">'+code+'</p><p>Guarde seu código em segurança. Volte ao site para avaliar quando a votação estiver aberta.</p><a target="_top" href="https://ivanildoferreira-wq.github.io/repositor-gpt/">Voltar ao Universo IF Avalia</a>');
+  } catch(err) { return HtmlService.createHtmlOutput('<h1>Não foi possível resgatar o convite</h1><p>Confira o convite com a organização e tente novamente.</p>'); }
 }
