@@ -87,3 +87,5 @@ button:disabled{opacity:.65;cursor:not-allowed}
 .participation-panel>div{flex:1;min-width:0}.participation-panel p{margin:5px 0;font-size:14px;line-height:1.5}.participation-panel>small{width:100%;color:#52665b;font-size:12px}.participation-panel .cooldown{background:#fff2d4;color:#795107;border-radius:8px;padding:10px;font-weight:700;font-variant-numeric:tabular-nums}.participant-summary{font-size:14px}.evaluation-card>.primary:not(.full){margin-bottom:16px}
 @media(max-width:1160px){.participation-panel{margin-left:20px;margin-right:20px}}
 @media(max-width:700px){.participation-panel{margin:12px 14px;padding:16px}.participation-panel>div,.participation-panel>.primary{width:100%;flex:auto}}
+
+.rank-description .rank-tie{color:#775100;font-weight:600;font-size:11px;line-height:1.4}
