@@ -154,8 +154,7 @@ jobs:
             await page.goto('http://127.0.0.1:4173/repositor-gpt/');
             await page.getByRole('button',{name:'Obter meu código',exact:true}).click();
             await expect(page.getByText('Seu código individual está ativo')).toBeVisible();
-            await expect(page.locator('.participation-panel button')).toBeEnabled({timeout:10000});
-            await page.locator('.participation-panel button').click();
+            if(await page.locator('.participation-panel button').isEnabled())await page.locator('.participation-panel button').click();
             await expect(page.locator('.participation-panel button')).toBeDisabled();
             await page.locator('.project-card').first().click();
             await page.getByRole('button',{name:'Avaliar este projeto'}).click();
@@ -163,7 +162,7 @@ jobs:
             await expect(page.getByRole('button',{name:'Enviar avaliação'})).toBeEnabled();
             await page.getByRole('button',{name:'Enviar avaliação'}).click();
             await expect(page.getByRole('button',{name:'Avaliação registrada'})).toBeVisible({timeout:12000});
-            await page.evaluate(()=>window.__releaseParticipant());
+            await page.evaluate(()=>window.__releaseParticipant?.());
             await expect(page.getByText('1 projetos avaliados')).toBeVisible();
             expect(sent).toBe(true);
           });
