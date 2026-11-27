@@ -1,7 +1,7 @@
 name: Revisao v2 - testes isolados
 on:
   push:
-    branches: [revisao-v2, revisao-v2-1, catalogo-intercalado]
+    branches: [revisao-v2, revisao-v2-1, catalogo-intercalado, ranking-posicoes]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -86,6 +86,11 @@ jobs:
               await expect(page.locator('.ranking-column')).toHaveCount(3);
               await expect(page.locator('.ranking-column').first()).toContainText('Geral');
               await expect(page.locator('.ranking-column').first().locator('.rank-position').first()).toContainText('1º');
+              for(const col of await page.locator('.ranking-column').all()){
+                const positions=await col.locator('.rank-position').allTextContents();
+                expect(positions).toEqual(Array.from({length:positions.length},(_,i)=>(i+1)+'º'));
+              }
+              await expect(page.locator('.ranking-column').first().locator('.rank-tie').first()).toBeVisible();
               await expect(page.getByRole('status')).toContainText('DADOS FICTÍCIOS');
               const target=page.locator('.ranking-column').first().locator('.rank-item').nth(3);
               const originalPosition=await target.locator('.rank-position').innerText();
