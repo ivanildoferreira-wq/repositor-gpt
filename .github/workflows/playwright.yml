@@ -52,7 +52,8 @@ jobs:
               await expect(page.getByText('Ranking por modalidade')).toBeVisible();
               await page.getByRole('button',{name:'Ver demonstração'}).click();
               await expect(page.getByRole('status')).toContainText('DADOS FICTÍCIOS');
-              await expect(page.locator('.project-card').first()).toBeVisible();
+              await expect(page.locator('.ranking-column')).toHaveCount(3);
+              await expect(page.locator('.rank-item').first()).toBeVisible();
               await page.getByRole('button',{name:'Ranking real'}).click();
               await expect(page.getByRole('status')).toHaveCount(0);
               await expect(page.getByRole('button',{name:'Atualizar ranking'})).toBeVisible();
