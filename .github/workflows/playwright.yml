@@ -5,13 +5,14 @@ on:
     workflows: ['Build and deploy to GitHub Pages']
     types: [completed]
   push:
+    branches: [main]
     paths:
       - '.github/workflows/playwright.yml'
 permissions:
   contents: read
 jobs:
   smoke:
-    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    if: github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
@@ -52,7 +53,8 @@ jobs:
               await expect(page.getByText('Ranking por modalidade')).toBeVisible();
               await page.getByRole('button',{name:'Ver demonstração'}).click();
               await expect(page.getByRole('status')).toContainText('DADOS FICTÍCIOS');
-              await expect(page.locator('.project-card').first()).toBeVisible();
+              await expect(page.locator('.ranking-column')).toHaveCount(3);
+              await expect(page.locator('.rank-item').first()).toBeVisible();
               await page.getByRole('button',{name:'Ranking real'}).click();
               await expect(page.getByRole('status')).toHaveCount(0);
               await expect(page.getByRole('button',{name:'Atualizar ranking'})).toBeVisible();
