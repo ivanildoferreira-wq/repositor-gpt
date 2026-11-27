@@ -99,9 +99,9 @@ export function browserToken():string {
   try {localStorage.setItem(participantKey,token);if(localStorage.getItem(participantKey)!==token)throw new Error();}catch{throw new Error('Permita o armazenamento local do navegador para manter seu código individual.');}
   return token;
 }
-export async function participantApi(token:string,create:boolean):Promise<Participant> {
+export async function participantApi(token:string,create:boolean,statusOnly=false):Promise<Participant> {
   const requestId=crypto.randomUUID().replace(/-/g,'');
-  const payload=JSON.stringify({token,create,requestId});
+  const payload=JSON.stringify({token,create,requestId,...(statusOnly?{statusOnly:true}:{})});
   const fields={publicAction:'participant',payload};
   // POST evita colocar o identificador privado na URL. Repetição é idempotente.
   const controller=new AbortController();
@@ -129,4 +129,13 @@ export async function participantApi(token:string,create:boolean):Promise<Partic
     }
     window.addEventListener('message',onMessage);document.body.append(frame,form);form.submit();
   });
+}
+
+
+// Consulta somente leitura: identificador temporário, sem emitir código nem gravar dados.
+export async function consultarStatusVotacao():Promise<boolean>{
+  const token=Array.from(crypto.getRandomValues(new Uint8Array(32)),b=>b.toString(16).padStart(2,'0')).join('').toUpperCase();
+  const result=await participantApi(token,false,true);
+  if(typeof result.open!=='boolean')throw new Error('Situação da votação indisponível.');
+  return result.open;
 }
