@@ -149,7 +149,7 @@ jobs:
             await page.getByRole('button',{name:'Obter meu código',exact:true}).click();
             await expect(page.getByText('Seu código individual está ativo')).toBeVisible();
             await page.getByRole('button',{name:'Atualizar meu acesso'}).click();
-            await expect(page.getByRole('button',{name:'Consultando...'})).toBeDisabled();
+            await expect(page.getByRole('button',{name:/Consultando/})).toBeDisabled();
             await page.locator('.project-card').first().click();
             await page.getByRole('button',{name:'Avaliar este projeto'}).click();
             for(const rating of await page.locator('.criterion').all())await rating.getByRole('button',{name:/^5 -/}).click();
