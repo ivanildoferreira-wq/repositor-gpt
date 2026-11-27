@@ -1,7 +1,7 @@
 name: Revisao v2 - testes isolados
 on:
   push:
-    branches: [revisao-v2, revisao-v2-1, catalogo-intercalado, ranking-posicoes]
+    branches: [revisao-v2, revisao-v2-1, catalogo-intercalado, ranking-posicoes, corrigir-envio]
   pull_request:
     branches: [main]
   workflow_dispatch:
@@ -120,6 +120,52 @@ jobs:
               expect(errors).toEqual([]);
             });
           }
+
+          test('envio com acesso confirmado durante consulta lenta',async({page})=>{
+            let sent=false;
+            await page.addInitScript(()=>{
+              const original=window.fetch.bind(window);
+              window.__participantCalls=0;
+              window.__voteSent=false;
+              window.fetch=async(input,options)=>{
+                if(!(options?.body instanceof URLSearchParams)||options.body.get('publicAction')!=='participant')return original(input,options);
+                const p=JSON.parse(options.body.get('payload'));
+                window.__participantCalls++;
+                if(window.__participantCalls===2)await new Promise(resolve=>{window.__releaseParticipant=resolve});
+                const voted=window.__voteSent;
+                return new Response(JSON.stringify({ok:true,result:{registered:true,open:false,code:'ABCDEF123456',projectIds:voted?['EXT-001']:[],total:voted?1:0,remaining:voted?4:5,waitMs:0,limit:5,minutes:10},requestId:p.requestId}),{status:200,headers:{'content-type':'application/json'}});
+              };
+            });
+            await page.route('**/*',async route=>{
+              const url=new URL(route.request().url());
+              if(url.origin==='http://127.0.0.1:4173')return route.continue();
+              const fields=new URLSearchParams(route.request().postData()||'');
+              if(fields.get('publicAction')==='submitEvaluation'){
+                sent=true;
+                await page.evaluate(()=>{window.__voteSent=true});
+                return route.fulfill({contentType:'text/html',body:'<html></html>'});
+              }
+              if(url.searchParams.has('callback')){
+                const data=url.searchParams.get('action')==='receipt'?{received:sent,score:5}:[];
+                return route.fulfill({contentType:'application/javascript',body:url.searchParams.get('callback')+'('+JSON.stringify({ok:true,result:data})+');'});
+              }
+              return route.abort();
+            });
+            await page.goto('http://127.0.0.1:4173/repositor-gpt/');
+            await page.getByRole('button',{name:'Obter meu código',exact:true}).click();
+            await expect(page.getByText('Seu código individual está ativo')).toBeVisible();
+            if(await page.locator('.participation-panel button').isEnabled())await page.locator('.participation-panel button').click();
+            await expect(page.locator('.participation-panel button')).toBeDisabled();
+            await page.locator('.project-card').first().click();
+            await page.getByRole('button',{name:'Avaliar este projeto'}).click();
+            for(const rating of await page.locator('.criterion').all())await rating.getByRole('button',{name:/^5 -/}).click();
+            await expect(page.getByRole('button',{name:'Enviar avaliação'})).toBeEnabled();
+            await page.getByRole('button',{name:'Enviar avaliação'}).click();
+            await expect(page.getByRole('button',{name:'Avaliação registrada'})).toBeVisible({timeout:12000});
+            await page.evaluate(()=>window.__releaseParticipant?.());
+            await expect(page.getByText('1 projetos avaliados')).toBeVisible();
+            expect(sent).toBe(true);
+          });
           EOF
           npx playwright test smoke.spec.cjs --reporter=html --trace=retain-on-failure
         env:
