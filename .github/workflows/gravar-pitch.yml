@@ -1,0 +1,35 @@
+name: Gravar demos do pitch
+on:
+  push:
+    branches: [midias-pitch]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  videos:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+      - run: npm install
+      - run: npm run build
+      - run: npm install --no-save @playwright/test@1.56.1
+      - run: npx playwright install chromium
+      - name: Record isolated demos
+        run: |
+          npm run preview -- --host 127.0.0.1 > /tmp/vite.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:4173/repositor-gpt/ >/dev/null && break; sleep 1; done
+          node demos-pitch.cjs
+          ffmpeg -y -i recordings/celular.webm -c:v libx264 -pix_fmt yuv420p -crf 21 -movflags +faststart recordings/celular.mp4
+          ffmpeg -y -i recordings/notebook.webm -c:v libx264 -pix_fmt yuv420p -crf 21 -movflags +faststart recordings/notebook.mp4
+      - uses: actions/upload-artifact@v5
+        if: always()
+        with:
+          name: pitch-videos
+          path: |
+            recordings/*.mp4
+            recordings/*.png
+            recordings/*.webm
