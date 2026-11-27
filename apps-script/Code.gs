@@ -27,7 +27,7 @@ function doPost(e) {
       const result = submitEvaluation_(payload);
       return HtmlService.createHtmlOutput(
         '<!doctype html><meta charset="utf-8"><script>top.postMessage(' +
-        JSON.stringify({ type: "UNIVERSO_IF_RESULT", requestId: payload.requestId, result: result }) +
+        JSON.stringify({ type: "UNIVERSO_IF_RESULT", requestId: payload.requestId, result: result }).replace(/</g,"\\u003c") +
         ',"*");</script><p>Envio processado. Você pode fechar esta janela.</p>'
       );
     }
@@ -41,7 +41,7 @@ function doPost(e) {
   } catch (err) {
     if (e && e.parameter && e.parameter.publicAction === "submitEvaluation") {
       return HtmlService.createHtmlOutput('<!doctype html><meta charset="utf-8"><script>top.postMessage(' +
-        JSON.stringify({ type: "UNIVERSO_IF_RESULT", requestId: (function(){try{return JSON.parse(e.parameter.payload||"{}").requestId||"";}catch(x){return "";}})(), error: safeMessage_(err) }) +
+        JSON.stringify({ type: "UNIVERSO_IF_RESULT", requestId: (function(){try{return JSON.parse(e.parameter.payload||"{}").requestId||"";}catch(x){return "";}})(), error: safeMessage_(err) }).replace(/</g,"\\u003c") +
         ',"*");</script><p>Não foi possível registrar a avaliação.</p>');
     }
     return json_({ ok: false, error: safeMessage_(err) });
@@ -75,7 +75,7 @@ function setupUniversoIF() {
   });
   const cfg = ss.getSheetByName("Configuracao");
   if (cfg.getLastRow() < 2) cfg.getRange(2,1,3,2).setValues([
-    ["votacao_aberta","TRUE"],["minimo_ranking","5"],["catalogo_versao","1.0"]
+    ["votacao_aberta","FALSE"],["minimo_ranking","5"],["catalogo_versao","1.0"]
   ]);
   return { spreadsheet: ss.getName(), sheets: Object.keys(U_HEADERS), next: "Importe o CSV oficial na aba Projetos, sem substituir o cabeçalho." };
 }
@@ -136,7 +136,7 @@ function publicRanking_() {
   const sums = {};
   rows.forEach(r => {
     const id=String(r[2] || ""), score=Number(r[7]);
-    if (!id || !isFinite(score)) return;
+    if (!id || !isFinite(score) || score<1 || score>5) return;
     if (!sums[id]) sums[id]={total:0,count:0};
     sums[id].total+=score; sums[id].count++;
   });
@@ -154,7 +154,7 @@ function submitEvaluation_(p) {
   if (!projectId || !/^[A-Z0-9-]{6,20}$/.test(projectId)) throw new Error("Projeto inválido.");
   if (!/^[A-F0-9]{12}$/.test(code)) throw new Error("Código inválido.");
   if (!Array.isArray(scores)||scores.length!==4||scores.some(n=>!Number.isInteger(n)||n<1||n>5)) throw new Error("Informe quatro notas inteiras entre 1 e 5.");
-  if (configValue_("votacao_aberta","TRUE")!=="TRUE") throw new Error("A votação está encerrada.");
+  if (configValue_("votacao_aberta","FALSE")!=="TRUE") throw new Error("A votação está encerrada.");
   const ss=getSpreadsheet_(), codes=ss.getSheetByName("Codigos"), votes=ss.getSheetByName("Avaliacoes");
   const projects=publicProjects_();
   if (!projects.some(x=>x.id===projectId)) throw new Error("Projeto não encontrado.");
@@ -162,6 +162,7 @@ function submitEvaluation_(p) {
   const lock=LockService.getScriptLock();
   lock.waitLock(20000);
   try {
+    if (configValue_("votacao_aberta","FALSE")!=="TRUE") throw new Error("A votação está encerrada.");
     const existingReq=findValue_(votes,1,p.requestId);
     if (existingReq) {
       const prior=votes.getRange(existingReq,2,1,7).getValues()[0];
@@ -324,7 +325,7 @@ function diagnosticarUniversoIF() {
     codigosUnicos: new Set(hashes).size,
     codigosAtivos: codeRows.filter(r=>String(r[1]).toUpperCase()==="TRUE").length,
     avaliacoes: Math.max(0,votes.getLastRow()-1),
-    votacaoAberta: configValue_("votacao_aberta","TRUE")==="TRUE",
+    votacaoAberta: configValue_("votacao_aberta","FALSE")==="TRUE",
     minimoRanking: Number(configValue_("minimo_ranking","5"))
   };
   Logger.log(JSON.stringify(result));
