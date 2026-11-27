@@ -39,3 +39,9 @@ export function intercalarModalidades(projetos: Projeto[]): Projeto[] {
   }
   return resultado.concat(outros);
 }
+
+/** Ordenação educativa: média, quantidade de avaliações e código como último critério de exibição. */
+export function ordenarRanking<T extends {id:string;media:number;avaliacoes:number}>(itens:T[]) {
+  const ordenados=[...itens].sort((a,b)=>b.media-a.media||b.avaliacoes-a.avaliacoes||a.id.localeCompare(b.id));
+  return ordenados.map((item,i)=>({...item,posicao:i+1,empate:ordenados.some(outro=>outro.id!==item.id&&outro.media===item.media&&outro.avaliacoes===item.avaliacoes)}));
+}

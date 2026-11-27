@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { calcularNota, normalizarBusca, validarCatalogo, intercalarModalidades, type Projeto } from './domain';
+import { calcularNota, normalizarBusca, validarCatalogo, intercalarModalidades, ordenarRanking, type Projeto } from './domain';
 
 describe('regras de avaliação', () => {
   it('calcula a nota ponderada do exemplo oficial', () => {
@@ -30,5 +30,17 @@ describe('catálogo intercalado',()=>{
     expect(intercalarModalidades([n1,n2])).toEqual([n1,n2]);
     expect(intercalarModalidades([e1,e2])).toEqual([e1,e2]);
     expect(intercalarModalidades([])).toEqual([]);
+  });
+});
+
+describe('classificação consecutiva',()=>{
+  it('ordena por média, avaliações e código, sem repetir posições e sinaliza empates',()=>{
+    const dados=[{id:'NAC-001',media:4.85,avaliacoes:5},{id:'EXT-001',media:4.85,avaliacoes:5},{id:'EXT-002',media:4.85,avaliacoes:7},{id:'NAC-002',media:4.66,avaliacoes:9}];
+    const r=ordenarRanking(dados);
+    expect(r.map(x=>x.id)).toEqual(['EXT-002','EXT-001','NAC-001','NAC-002']);
+    expect(r.map(x=>x.posicao)).toEqual([1,2,3,4]);
+    expect(r.map(x=>x.empate)).toEqual([false,true,true,false]);
+    expect(r.filter(x=>x.id==='NAC-001')[0].posicao).toBe(3);
+    expect(dados[0].id).toBe('NAC-001');
   });
 });
