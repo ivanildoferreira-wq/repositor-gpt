@@ -38,7 +38,7 @@ jobs:
               await search.fill('zzzz_sem_resultado_123');
               await expect(page.getByText('Nenhum projeto encontrado')).toBeVisible();
               await search.clear();
-              await expect(page.getByRole('link',{name:'Obter meu código'})).toHaveAttribute('href', /action=codePage/);
+              await expect(page.getByRole('button',{name:'Obter meu código',exact:true})).toBeVisible();
               await page.locator('.filters select').selectOption('Mostra de Extensão');
               await expect(page.locator('.project-card').first()).toContainText('Mostra de Extensão');
               await page.locator('.filters select').selectOption('Todas');
